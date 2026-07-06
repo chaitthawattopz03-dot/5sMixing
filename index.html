@@ -1,0 +1,1441 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>บันทึก 5ส ประจำวัน</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Sarabun',sans-serif;background:#f2f2f7;color:#1a1a1a;font-size:15px}
+.wrap{max-width:700px;margin:0 auto;padding:20px 16px 40px}
+.header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+.header h1{font-size:22px;font-weight:700}
+.header-tags{display:flex;gap:4px;flex-wrap:wrap}
+.htag-sm{padding:3px 9px;border-radius:99px;font-size:11px;font-weight:600;border:1px solid}
+.tabs{display:flex;background:#fff;border-radius:14px;padding:4px;gap:4px;margin-bottom:20px;box-shadow:0 1px 4px rgba(0,0,0,.06);overflow-x:auto}
+.tab{flex:1;padding:10px 8px;font-size:13px;font-weight:500;color:#999;background:none;border:none;cursor:pointer;border-radius:10px;transition:all .15s;font-family:inherit;white-space:nowrap;min-width:60px}
+.tab.on{color:#1a1a1a;background:#f2f2f7;font-weight:600}
+.sec{display:none}.sec.on{display:block}
+.card{background:#fff;border-radius:16px;padding:20px;margin-bottom:14px;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+.clabel{font-size:11px;font-weight:700;color:#aaa;text-transform:uppercase;letter-spacing:.07em;margin-bottom:14px}
+.stat-bar{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
+.stat{background:#f7f7f7;border-radius:12px;padding:14px;text-align:center}
+.stat-n{font-size:26px;font-weight:700;color:#1a1a1a}
+.stat-l{font-size:11px;color:#aaa;margin-top:3px}
+.toolbar{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap}
+input[type=text],textarea{padding:10px 14px;border:1.5px solid #eee;border-radius:10px;font-size:14px;font-family:inherit;color:#1a1a1a;background:#fff;outline:none;transition:border .15s;width:100%}
+input[type=text]:focus,textarea:focus{border-color:#aaa}
+.toolbar input{flex:1;min-width:140px;width:auto}
+.small-btn{background:#fff;border:1.5px solid #eee;border-radius:10px;padding:9px 14px;font-size:13px;cursor:pointer;color:#555;font-family:inherit;transition:all .1s;white-space:nowrap}
+.small-btn:hover{background:#f7f7f7;border-color:#ddd}
+.mlist{border:1.5px solid #f0f0f0;border-radius:12px;overflow:hidden}
+.mrow{display:flex;align-items:center;gap:8px;padding:10px 14px;border-bottom:1px solid #f5f5f5;transition:background .1s}
+.mrow:last-child{border-bottom:none}
+.mrow.ck{background:#f0faf6}
+.mrow.hid{display:none}
+.mnum{font-size:11px;color:#ccc;min-width:22px;text-align:right;flex-shrink:0}
+.mchk{width:18px;height:18px;cursor:pointer;accent-color:#1D9E75;flex-shrink:0}
+.mname{flex:1;font-size:14px;color:#1a1a1a}
+.mrow.ck .mname{color:#0F6E56;font-weight:600}
+.medit{flex:1;font-size:14px;padding:5px 10px;border:1.5px solid #ddd;border-radius:8px;display:none;font-family:inherit;width:auto}
+.eb,.db,.sb{background:none;border:1.5px solid #eee;border-radius:8px;padding:4px 10px;font-size:12px;cursor:pointer;color:#888;font-family:inherit;transition:all .1s;white-space:nowrap}
+.eb:hover{background:#EBF5FF;color:#185FA5;border-color:#B5D4F4}
+.db:hover{background:#FFF0F0;color:#A32D2D;border-color:#F4A0A0}
+.sb{display:none;border-color:#9FE1CB;color:#0F6E56}
+.add-row{display:flex;gap:8px;margin-top:12px}
+.add-row input{flex:1;width:auto}
+.add-btn{white-space:nowrap;background:#1a1a1a;color:#fff;border:none;border-radius:10px;padding:10px 18px;font-size:14px;cursor:pointer;font-family:inherit;font-weight:500}
+.add-btn:hover{opacity:.85}
+/* ===== STEP 2 ENHANCED ===== */
+.stags-section{margin-top:4px}
+.stag-item{border-radius:16px;margin-bottom:10px;border:2px solid;overflow:hidden;transition:all .2s;cursor:pointer}
+.stag-item.off{opacity:.45;border-style:dashed}
+.stag-item.on{opacity:1;border-style:solid}
+.stag-header{display:flex;align-items:center;gap:12px;padding:14px 16px;cursor:pointer;user-select:none}
+.stag-header input[type=checkbox]{display:none}
+.stag-icon{font-size:22px;flex-shrink:0}
+.stag-title-wrap{flex:1}
+.stag-title{font-size:15px;font-weight:700;line-height:1.2}
+.stag-subtitle{font-size:12px;opacity:.75;margin-top:2px}
+.stag-check{width:24px;height:24px;border-radius:50%;border:2px solid;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .2s;font-size:14px}
+.stag-desc{font-size:13px;line-height:1.7;padding:0 16px 14px;border-top:1px solid rgba(0,0,0,.06);margin-top:0;display:none}
+.stag-item.on .stag-desc{display:block}
+.stag-example{font-size:12px;opacity:.65;margin-top:6px;line-height:1.6}
+.s1-item{background:#E6F1FB;border-color:#B5D4F4;color:#185FA5}
+.s2-item{background:#EAF3DE;border-color:#C0DD97;color:#3B6D11}
+.s3-item{background:#FAEEDA;border-color:#FAC775;color:#854F0B}
+.s4-item{background:#EEEDFE;border-color:#CECBF6;color:#534AB7}
+.s5-item{background:#E1F5EE;border-color:#9FE1CB;color:#0F6E56}
+/* ===== AREA STEP ===== */
+.area-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.area-btn{background:#f7f7f7;border:2px solid #eee;border-radius:12px;padding:12px 10px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;color:#555;transition:all .15s;text-align:center;line-height:1.4}
+.area-btn:hover{background:#e8f4fe;border-color:#90c4f0;color:#185FA5}
+.area-btn.sel{background:#1D9E75;border-color:#1D9E75;color:#fff}
+/* ปุ่ม "ทุกวัน" (Unit Mixing + SMP SOLUTION) */
+.area-btn.daily{border-color:#1D9E75;background:#f0faf6}
+.area-btn.daily.sel{background:#1D9E75;border-color:#1D9E75;color:#fff}
+/* ปุ่ม Event วันนี้ — ไฮไลต์เบาๆ ไม่กระพริบ */
+.area-btn.event{border-color:#378ADD;background:#eaf4ff;color:#185FA5}
+.area-btn.event.sel{background:#1D9E75;border-color:#1D9E75;color:#fff}
+/* Badge เล็กในปุ่ม */
+.ab-badge{display:block;font-size:10px;font-weight:700;border-radius:5px;padding:1px 6px;margin-top:4px;width:fit-content;margin-left:auto;margin-right:auto}
+.ab-badge.green{background:#1D9E75;color:#fff}
+.ab-badge.blue{background:#378ADD;color:#fff}
+/* Event Banner */
+.event-banner{background:linear-gradient(135deg,#eaf4ff,#dbeeff);border:1.5px solid #378ADD;border-radius:12px;padding:10px 14px;margin-bottom:10px;font-size:13px;font-weight:600;color:#185FA5;display:flex;align-items:flex-start;gap:8px;line-height:1.5}
+/* Score pill ในประวัติ */
+.score-pill{display:inline-flex;align-items:center;gap:4px;border-radius:8px;padding:2px 9px;font-size:12px;font-weight:700}
+.score-pill.normal{background:#e1f5ee;color:#0F6E56}
+/* ===== OLD stag for compatibility ===== */
+.stags{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}
+.stag{display:flex;align-items:center;gap:6px;padding:8px 16px;border-radius:99px;font-size:13px;font-weight:600;cursor:pointer;border:1.5px solid;transition:opacity .15s;user-select:none;font-family:inherit}
+.stag input{display:none}
+.stag.off{opacity:.28}
+.s1{background:#E6F1FB;color:#185FA5;border-color:#B5D4F4}
+.s2{background:#EAF3DE;color:#3B6D11;border-color:#C0DD97}
+.s3{background:#FAEEDA;color:#854F0B;border-color:#FAC775}
+.s4{background:#EEEDFE;color:#534AB7;border-color:#CECBF6}
+.s5{background:#E1F5EE;color:#0F6E56;border-color:#9FE1CB}
+/* ===== PHOTO ===== */
+.photo-zone{border:2px dashed #e0e0e0;border-radius:12px;padding:28px;text-align:center;cursor:pointer;transition:background .15s}
+.photo-zone:hover{background:#fafafa}
+.picon{margin:0 auto 8px;opacity:.3;display:block}
+.photo-zone p{font-size:13px;color:#bbb}
+.pgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:8px;margin-top:12px}
+.pthumb{position:relative;aspect-ratio:1;border-radius:10px;overflow:hidden;border:1px solid #eee}
+.pthumb img{width:100%;height:100%;object-fit:cover}
+.pdel{position:absolute;top:4px;right:4px;background:rgba(0,0,0,.6);color:#fff;border:none;border-radius:50%;width:22px;height:22px;font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+textarea{resize:vertical;min-height:70px}
+.save-main{width:100%;padding:16px;background:#1a1a1a;color:#fff;border:none;border-radius:14px;font-size:16px;font-weight:700;cursor:pointer;font-family:inherit;transition:opacity .15s}
+.save-main:hover{opacity:.85}
+.save-main:active{transform:scale(.99)}
+.export-btn{width:100%;padding:13px;background:#217346;color:#fff;border:none;border-radius:14px;font-size:15px;font-weight:600;cursor:pointer;font-family:inherit;margin-top:10px;display:flex;align-items:center;justify-content:center;gap:8px}
+.export-btn:hover{opacity:.88}
+.hrow{display:flex;align-items:flex-start;gap:12px;padding:14px 0;border-bottom:1px solid #f5f5f5}
+.hrow:last-child{border-bottom:none}
+.hdot{width:10px;height:10px;border-radius:50%;background:#1D9E75;flex-shrink:0;margin-top:4px}
+.hmeta{flex:1}
+.hdate{font-size:15px;font-weight:700;color:#1a1a1a}
+.htime{font-size:12px;color:#aaa;margin-top:2px}
+.hmembers{font-size:12px;color:#888;margin-top:5px;line-height:1.6}
+.hthumb{width:56px;height:56px;border-radius:10px;object-fit:cover;border:1px solid #eee;flex-shrink:0}
+/* Photo gallery in history */
+.hphoto-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(80px,1fr));gap:6px;margin-top:10px}
+.hphoto-thumb{position:relative;aspect-ratio:1;border-radius:10px;overflow:hidden;border:1px solid #eee;cursor:pointer}
+.hphoto-thumb img{width:100%;height:100%;object-fit:cover;transition:transform .2s}
+.hphoto-thumb:hover img{transform:scale(1.05)}
+.hphoto-count{font-size:11px;color:#aaa;margin-top:6px}
+/* Select-delete mode */
+.sel-del-bar{display:none;align-items:center;justify-content:space-between;background:#fff3f3;border:1.5px solid #f4a0a0;border-radius:12px;padding:10px 14px;margin-bottom:10px;gap:8px;flex-wrap:wrap}
+.sel-del-bar.on{display:flex}
+.sel-del-count{font-size:13px;font-weight:600;color:#a32d2d;flex:1}
+.sel-del-btns{display:flex;gap:8px}
+.sel-all-btn{padding:7px 14px;font-size:13px;font-weight:600;border:1.5px solid #ddd;border-radius:9px;background:#fff;cursor:pointer;font-family:inherit;color:#555}
+.sel-all-btn:hover{background:#f5f5f5}
+.del-sel-btn{padding:7px 14px;font-size:13px;font-weight:600;border:none;border-radius:9px;background:#e53e3e;color:#fff;cursor:pointer;font-family:inherit}
+.del-sel-btn:disabled{opacity:.4;cursor:not-allowed}
+.cancel-sel-btn{padding:7px 14px;font-size:13px;font-weight:600;border:1.5px solid #ddd;border-radius:9px;background:#fff;cursor:pointer;font-family:inherit;color:#555}
+.hrow-sel{cursor:pointer;transition:background .1s}
+.hrow-sel:hover{background:#fafafa}
+.hrow-sel.checked-row{background:#fff0f0}
+.hrow-cb{width:20px;height:20px;cursor:pointer;accent-color:#e53e3e;flex-shrink:0;margin-top:3px}
+/* Lightbox */
+#lightbox{display:none;position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:99999;align-items:center;justify-content:center;flex-direction:column}
+#lightbox.show{display:flex}
+#lb-img{max-width:92vw;max-height:80vh;border-radius:12px;object-fit:contain;box-shadow:0 8px 40px rgba(0,0,0,.5)}
+#lb-caption{color:#fff;font-size:13px;margin-top:14px;opacity:.7;text-align:center;padding:0 20px}
+#lb-nav{display:flex;align-items:center;gap:20px;margin-top:16px}
+.lb-btn{background:rgba(255,255,255,.15);border:none;color:#fff;width:44px;height:44px;border-radius:50%;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .15s}
+.lb-btn:hover{background:rgba(255,255,255,.3)}
+#lb-counter{color:#fff;font-size:14px;font-weight:600;min-width:60px;text-align:center}
+#lb-close{position:absolute;top:20px;right:20px;background:rgba(255,255,255,.15);border:none;color:#fff;width:40px;height:40px;border-radius:50%;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+#lb-close:hover{background:rgba(255,255,255,.3)}
+/* Export buttons */
+.export-wrap{display:flex;flex-direction:column;gap:8px;margin-top:10px}
+.export-btn-xl{padding:13px;background:#217346;color:#fff;border:none;border-radius:14px;font-size:15px;font-weight:600;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:8px;width:100%}
+.export-btn-xl:hover{opacity:.88}
+.export-btn-zip{padding:13px;background:#1a6eb5;color:#fff;border:none;border-radius:14px;font-size:15px;font-weight:600;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:8px;width:100%}
+.export-btn-zip:hover{opacity:.88}
+.export-btn-all{padding:13px;background:#1a1a1a;color:#fff;border:none;border-radius:14px;font-size:15px;font-weight:600;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:8px;width:100%}
+.export-btn-all:hover{opacity:.85}
+.export-progress{background:#f7f7f7;border-radius:12px;padding:14px 16px;display:none}
+.export-progress-bar{height:8px;background:#e0e0e0;border-radius:99px;overflow:hidden;margin-top:8px}
+.export-progress-fill{height:100%;background:#1D9E75;border-radius:99px;transition:width .3s;width:0%}
+.rtag{padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600;border:1px solid;display:inline-block;margin:3px 3px 0 0}
+.empty{text-align:center;padding:3rem;color:#ccc;font-size:14px}
+.toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%);background:#1a1a1a;color:#fff;padding:12px 24px;border-radius:12px;font-size:14px;opacity:0;transition:opacity .3s;pointer-events:none;z-index:999;white-space:nowrap;box-shadow:0 4px 20px rgba(0,0,0,.2)}
+.toast.show{opacity:1}
+.rank-row{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid #f5f5f5}
+.rank-row:last-child{border-bottom:none}
+.pin-key{padding:14px;font-size:18px;font-weight:600;font-family:inherit;background:#f7f7f7;border:1.5px solid #eee;border-radius:12px;cursor:pointer;transition:all .1s;color:#1a1a1a}
+.pin-key:hover{background:#eee}
+.pin-key:active{transform:scale(.93);background:#e0e0e0}
+.wiz-next{width:100%;padding:14px;background:#1a1a1a;color:#fff;border:none;border-radius:14px;font-size:16px;font-weight:700;cursor:pointer;font-family:inherit;transition:opacity .15s;margin-top:4px}
+.wiz-next:hover{opacity:.85}
+.wiz-back{padding:14px 20px;background:#fff;color:#555;border:1.5px solid #ddd;border-radius:14px;font-size:15px;font-weight:600;cursor:pointer;font-family:inherit;margin-top:4px}
+.wiz-back:hover{background:#f5f5f5}
+.wiz-err{color:#e53e3e;font-size:13px;font-weight:500;min-height:20px;margin:6px 0 2px;padding-left:4px}
+.wiz-dot{width:32px;height:32px;border-radius:50%;border:2px solid #ddd;background:#fff;color:#bbb;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;flex:1;max-width:32px;transition:all .2s}
+.wiz-dot.on{background:#1D9E75;border-color:#1D9E75;color:#fff}
+.wiz-dot.done{background:#E1F5EE;border-color:#9FE1CB;color:#0F6E56;cursor:pointer}
+/* Monthly score chart */
+.month-sel{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+.msel-btn{padding:7px 14px;border-radius:99px;font-size:13px;font-weight:600;border:1.5px solid #eee;background:#fff;cursor:pointer;font-family:inherit;color:#888;transition:all .15s}
+.msel-btn.on{background:#1a1a1a;color:#fff;border-color:#1a1a1a}
+@media(max-width:480px){.stat-n{font-size:22px}.header h1{font-size:18px}.area-grid{grid-template-columns:1fr}}
+/* Success Modal */
+#success-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:99999;align-items:center;justify-content:center}
+#success-overlay.show{display:flex}
+.success-box{background:#fff;border-radius:24px;padding:36px 28px;width:300px;text-align:center;box-shadow:0 8px 40px rgba(0,0,0,.2);animation:popIn .3s ease}
+@keyframes popIn{from{transform:scale(.8);opacity:0}to{transform:scale(1);opacity:1}}
+.success-icon{font-size:56px;margin-bottom:12px;animation:bounce .5s .2s ease both}
+@keyframes bounce{0%{transform:scale(0)}60%{transform:scale(1.2)}100%{transform:scale(1)}}
+.success-title{font-size:20px;font-weight:700;color:#0F6E56;margin-bottom:6px}
+.success-sub{font-size:14px;color:#888;line-height:1.6;margin-bottom:10px}
+.success-detail{font-size:13px;color:#555;line-height:1.7;margin-bottom:22px;background:#f0faf6;border-radius:10px;padding:10px 14px;text-align:left;border:1px solid #9FE1CB}
+.success-ok{width:100%;padding:14px;background:#1D9E75;color:#fff;border:none;border-radius:14px;font-size:16px;font-weight:700;cursor:pointer;font-family:inherit}
+
+/* ===== ACHIEVEMENTS / รางวัล (Gamification) ===== */
+.champ-banner{background:linear-gradient(135deg,#FFE39B 0%,#FFB400 100%);border-radius:18px;padding:22px;color:#5b3a00;margin-bottom:14px;position:relative;overflow:hidden;box-shadow:0 4px 14px rgba(255,180,0,.25)}
+.champ-crown{font-size:42px;position:absolute;right:14px;top:12px;opacity:.9;filter:drop-shadow(0 2px 3px rgba(0,0,0,.1))}
+.champ-label{font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;opacity:.7}
+.champ-name{font-size:21px;font-weight:800;margin-top:5px;padding-right:50px;line-height:1.3}
+.champ-score{font-size:13px;margin-top:5px;font-weight:600;opacity:.85}
+.badge-legend{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px}
+.badge-legend-item{background:#f7f7f7;border-radius:12px;padding:10px 6px;text-align:center}
+.badge-legend-icon{font-size:24px;line-height:1}
+.badge-legend-label{font-size:10.5px;color:#888;margin-top:5px;line-height:1.4;font-weight:600}
+.hof-row{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid #f5f5f5;font-size:13px}
+.hof-row:last-child{border-bottom:none}
+.hof-month{flex:0 0 52px;color:#aaa;font-weight:600}
+.hof-champ{flex:1;font-weight:600;color:#5b3a00}
+.hof-score{color:#aaa;font-size:12px}
+.award-section-label{font-size:11px;font-weight:700;color:#aaa;text-transform:uppercase;letter-spacing:.07em;margin:18px 4px 10px}
+.award-card{background:#fff;border-radius:14px;padding:14px 16px;margin-bottom:10px;box-shadow:0 1px 3px rgba(0,0,0,.05);border:1.5px solid transparent}
+.award-card.champ{border-color:#FFD66B;background:#FFFBEF}
+.award-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:10px}
+.award-name{font-size:15px;font-weight:700}
+.award-sub{font-size:11.5px;color:#aaa;margin-top:2px}
+.award-medals{font-size:13px;font-weight:700;color:#1D9E75;white-space:nowrap;background:#f0faf6;border-radius:99px;padding:4px 10px}
+.badge-row{display:flex;gap:6px;flex-wrap:wrap}
+.badge-pill{display:flex;align-items:center;gap:4px;border-radius:99px;padding:4px 10px 4px 8px;font-size:11.5px;font-weight:600;background:#f2f2f2;color:#c4c4c4;transition:all .15s}
+.badge-pill.on{background:#FFF3D6;color:#8a5e00}
+.badge-pill .bp-icon{font-size:14px;filter:grayscale(1);opacity:.5}
+.badge-pill.on .bp-icon{filter:none;opacity:1}
+.award-progress{margin-top:9px;font-size:11px;color:#999}
+.award-bar-track{background:#f0f0f0;border-radius:99px;height:6px;margin-top:4px;overflow:hidden}
+.award-bar-fill{height:100%;border-radius:99px;background:#1D9E75;transition:width .3s}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="header">
+    <h1>📋 บันทึก 5ส ประจำวัน</h1>
+    <div class="header-tags">
+      <span class="htag-sm s1">สะสาง</span>
+      <span class="htag-sm s2">สะดวก</span>
+      <span class="htag-sm s3">สะอาด</span>
+      <span class="htag-sm s4">สุขลักษณะ</span>
+      <span class="htag-sm s5">สร้างนิสัย</span>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab on" onclick="sw('rec')">บันทึก 5ส</button>
+    <button class="tab" onclick="sw('hist')">ประวัติ</button>
+    <button class="tab" onclick="sw('chart')">สถิติ</button>
+    <button class="tab" onclick="sw('area')">พื้นที่ 5ส</button>
+    <button class="tab" onclick="sw('award')">🏆 รางวัล</button>
+  </div>
+
+  <!-- ===== บันทึก (Wizard) ===== -->
+  <div id="sec-rec" class="sec on">
+    <!-- Progress bar -->
+    <div class="card" style="padding:16px 20px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+        <span style="font-size:13px;font-weight:600;color:#1a1a1a" id="wiz-step-label">ขั้นที่ 1 / 4</span>
+        <span style="font-size:12px;color:#aaa" id="wiz-step-title">ทีมงาน</span>
+      </div>
+      <div style="background:#f0f0f0;border-radius:99px;height:8px;overflow:hidden">
+        <div id="wiz-bar" style="height:100%;border-radius:99px;background:#1D9E75;transition:width .35s ease;width:25%"></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;margin-top:10px;gap:4px">
+        <div class="wiz-dot on" id="dot0" onclick="goStep(0)">1</div>
+        <div class="wiz-dot" id="dot1">2</div>
+        <div class="wiz-dot" id="dot2">3</div>
+        <div class="wiz-dot" id="dot3">4</div>
+
+      </div>
+    </div>
+
+    <!-- Step 1: สมาชิก -->
+    <div id="wstep-0" class="wstep">
+      <div class="card">
+        <div class="clabel">ขั้นที่ 1 — ติ๊กทีมงานที่เข้าร่วมวันนี้</div>
+        <div class="stat-bar">
+          <div class="stat"><div class="stat-n" id="sc">0</div><div class="stat-l">ติ๊กแล้ว</div></div>
+          <div class="stat"><div class="stat-n" id="st">0</div><div class="stat-l">ทั้งหมด</div></div>
+          <div class="stat"><div class="stat-n" id="sp">0%</div><div class="stat-l">เปอร์เซ็นต์</div></div>
+        </div>
+        <div class="toolbar">
+          <input type="text" id="search" placeholder="🔍  ค้นหาชื่อ..." oninput="renderMembers()">
+          <button class="small-btn" onclick="tickAll()">ติ๊กทั้งหมด</button>
+          <button class="small-btn" onclick="clearTick()">ล้าง</button>
+        </div>
+        <div class="mlist" id="mlist"></div>
+        <div class="add-row">
+          <input type="text" id="new-name" placeholder="เพิ่มสมาชิกใหม่..." onkeydown="if(event.key==='Enter')addMember()">
+          <button class="add-btn" onclick="addMember()">+ เพิ่ม</button>
+        </div>
+      </div>
+      <div id="err-0" class="wiz-err"></div>
+      <button class="wiz-next" onclick="nextStep(0)">ถัดไป →</button>
+    </div>
+
+    <!-- Step 2: หมวด 5ส (ENHANCED) -->
+    <div id="wstep-1" class="wstep" style="display:none">
+      <div class="card">
+        <div class="clabel">ขั้นที่ 2 — เลือกหมวด 5ส ที่ทำวันนี้ (กดเพื่อเลือก เลือกได้มากกว่า 1 หมวด)</div>
+
+        <div class="stags-section">
+
+          <!-- สะสาง -->
+          <div class="stag-item s1-item off" id="si0" onclick="toggleStagItem(0)">
+            <div class="stag-header">
+              <input type="checkbox" id="stag-cb0" value="สะสาง">
+              <div class="stag-icon">🗂</div>
+              <div class="stag-title-wrap">
+                <div class="stag-title">ส.1 — สะสาง</div>
+                <div class="stag-subtitle">แยกของที่จำเป็น ออกจากของที่ไม่จำเป็น</div>
+              </div>
+              <div class="stag-check" id="sc0">○</div>
+            </div>
+            <div class="stag-desc">
+              <strong>ทำอะไรในขั้นนี้?</strong> แยกและคัดแยกสิ่งของในพื้นที่ทำงาน โดยเก็บเฉพาะสิ่งที่จำเป็นต้องใช้งาน ส่วนของที่ไม่ใช้หรือใช้ไม่บ่อยให้นำออกจากพื้นที่ ติดแท็กสีแดง (Red Tag) เพื่อระบุของที่ต้องตัดสินใจ
+              <div class="stag-example">📌 ตัวอย่าง: คัดแยกอุปกรณ์เก่าออก · ทิ้งวัสดุหมดอายุ · โยกย้ายอุปกรณ์ที่ไม่ใช่ของโซนนี้</div>
+            </div>
+          </div>
+
+          <!-- สะดวก -->
+          <div class="stag-item s2-item off" id="si1" onclick="toggleStagItem(1)">
+            <div class="stag-header">
+              <input type="checkbox" id="stag-cb1" value="สะดวก">
+              <div class="stag-icon">📦</div>
+              <div class="stag-title-wrap">
+                <div class="stag-title">ส.2 — สะดวก</div>
+                <div class="stag-subtitle">จัดวางทุกสิ่งให้ใช้งานได้ง่ายและรวดเร็ว</div>
+              </div>
+              <div class="stag-check" id="sc1">○</div>
+            </div>
+            <div class="stag-desc">
+              <strong>ทำอะไรในขั้นนี้?</strong> จัดระเบียบสิ่งของที่เหลือจากการสะสางให้อยู่ในตำแหน่งที่กำหนด มีป้ายระบุชัดเจน หยิบใช้ได้ทันทีโดยไม่ต้องค้นหา วางให้ตรงที่ถูกต้องทุกครั้งหลังใช้งาน
+              <div class="stag-example">📌 ตัวอย่าง: ติดป้ายชื่อชั้นวาง · ลากเส้นแบ่งโซน · จัดอุปกรณ์เข้าที่ให้ครบ</div>
+            </div>
+          </div>
+
+          <!-- สะอาด -->
+          <div class="stag-item s3-item off" id="si2" onclick="toggleStagItem(2)">
+            <div class="stag-header">
+              <input type="checkbox" id="stag-cb2" value="สะอาด">
+              <div class="stag-icon">🧹</div>
+              <div class="stag-title-wrap">
+                <div class="stag-title">ส.3 — สะอาด</div>
+                <div class="stag-subtitle">ทำความสะอาดพื้นที่และอุปกรณ์ให้สะอาดเสมอ</div>
+              </div>
+              <div class="stag-check" id="sc2">○</div>
+            </div>
+            <div class="stag-desc">
+              <strong>ทำอะไรในขั้นนี้?</strong> ทำความสะอาดเครื่องจักร อุปกรณ์ พื้น และโซนรับผิดชอบ ในขณะทำความสะอาดให้ตรวจสอบหาความผิดปกติ รั่ว รอยแตก หรือความเสียหาย เพื่อแจ้งซ่อมทันที
+              <div class="stag-example">📌 ตัวอย่าง: ถูพื้น เช็ดเครื่องจักร · ทำความสะอาดชั้นวาง · กำจัดฝุ่นและคราบ</div>
+            </div>
+          </div>
+
+          <!-- สุขลักษณะ -->
+          <div class="stag-item s4-item off" id="si3" onclick="toggleStagItem(3)">
+            <div class="stag-header">
+              <input type="checkbox" id="stag-cb3" value="สุขลักษณะ">
+              <div class="stag-icon">✅</div>
+              <div class="stag-title-wrap">
+                <div class="stag-title">ส.4 — สุขลักษณะ</div>
+                <div class="stag-subtitle">รักษาและควบคุมมาตรฐาน 3ส แรกให้คงอยู่</div>
+              </div>
+              <div class="stag-check" id="sc3">○</div>
+            </div>
+            <div class="stag-desc">
+              <strong>ทำอะไรในขั้นนี้?</strong> จัดทำมาตรฐานและขั้นตอนการดูแลรักษา 3ส แรก เช่น กำหนดตารางทำความสะอาด สร้าง Visual Control และตรวจสอบตาม Checklist เพื่อให้มั่นใจว่ายังคงรักษาสภาพที่ดีไว้ได้
+              <div class="stag-example">📌 ตัวอย่าง: ตรวจ Checklist ประจำวัน · ถ่ายรูป Before–After · อัปเดตป้ายมาตรฐาน</div>
+            </div>
+          </div>
+
+          <!-- สร้างนิสัย -->
+          <div class="stag-item s5-item off" id="si4" onclick="toggleStagItem(4)">
+            <div class="stag-header">
+              <input type="checkbox" id="stag-cb4" value="สร้างนิสัย">
+              <div class="stag-icon">🌱</div>
+              <div class="stag-title-wrap">
+                <div class="stag-title">ส.5 — สร้างนิสัย</div>
+                <div class="stag-subtitle">ปฏิบัติตาม 4ส อย่างสม่ำเสมอและมีวินัย</div>
+              </div>
+              <div class="stag-check" id="sc4">○</div>
+            </div>
+            <div class="stag-desc">
+              <strong>ทำอะไรในขั้นนี้?</strong> ปฏิบัติตามกฎระเบียบและขั้นตอน 5ส อย่างสม่ำเสมอจนเป็นนิสัย ร่วมประชุม 5ส เสนอแนวทางปรับปรุง รายงานปัญหาที่พบ และสนับสนุนเพื่อนร่วมงานให้ร่วมมือกัน
+              <div class="stag-example">📌 ตัวอย่าง: ประชุม 5ส · เสนอ Kaizen · บันทึกการตรวจสอบประจำวัน</div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+      <div id="err-1" class="wiz-err"></div>
+      <div style="display:flex;gap:10px">
+        <button class="wiz-back" onclick="prevStep(1)">← ย้อนกลับ</button>
+        <button class="wiz-next" onclick="nextStep(1)" style="flex:2">ถัดไป →</button>
+      </div>
+    </div>
+
+    <!-- Step 3: พื้นที่ 5ส -->
+    <div id="wstep-2" class="wstep" style="display:none">
+      <div class="card">
+        <div class="clabel">ขั้นที่ 3 — เลือกพื้นที่ที่ทำ 5ส วันนี้ (เลือกได้มากกว่า 1 พื้นที่)</div>
+        <div id="event-banner" style="display:none" class="event-banner">⚡ <span id="event-banner-text"></span></div>
+        <div class="area-grid" id="area-grid">
+          <!-- filled by JS -->
+        </div>
+      </div>
+      <div id="err-2" class="wiz-err"></div>
+      <div style="display:flex;gap:10px">
+        <button class="wiz-back" onclick="prevStep(2)">← ย้อนกลับ</button>
+        <button class="wiz-next" onclick="nextStep(2)" style="flex:2">ถัดไป →</button>
+      </div>
+    </div>
+
+    <!-- Step 4: รูปภาพ -->
+    <div id="wstep-3" class="wstep" style="display:none">
+      <div class="card">
+        <div class="clabel">ขั้นที่ 4 — ถ่ายภาพหรืออัปโหลดจากอัลบั้ม (อย่างน้อย 1 ภาพ)</div>
+        <input type="file" id="file-in" accept="image/*" multiple style="display:none" onchange="handlePhotos(event)">
+        <div class="photo-zone" onclick="document.getElementById('file-in').click()">
+          <svg class="picon" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#999" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+          <p>แตะเพื่อเลือกภาพจากกล้องหรืออัลบั้ม</p>
+        </div>
+        <div class="pgrid" id="pgrid"></div>
+      </div>
+      <div id="err-3" class="wiz-err"></div>
+      <div style="display:flex;gap:10px">
+        <button class="wiz-back" onclick="prevStep(3)">← ย้อนกลับ</button>
+        <button class="save-main" onclick="saveRecord()" style="flex:2;margin-top:0">✅ &nbsp;บันทึกกิจกรรม 5ส</button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ===== ประวัติ ===== -->
+  <div id="sec-hist" class="sec">
+    <div class="card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+        <div class="clabel" style="margin-bottom:0">ประวัติทั้งหมด</div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <button id="enter-sel-btn" onclick="enterSelMode()" style="background:#fff8e6;border:1.5px solid #f6c86e;color:#8a5e00;border-radius:10px;padding:7px 14px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">&#9745; เลือกลบ</button>
+          <button onclick="deleteAllRecords()" title="ลบเฉพาะไฟล์ภาพของทุกรายการ เก็บสถิติ/เหรียญตราไว้ครบทุกหน้า" style="background:#fff0f0;border:1.5px solid #f4a0a0;color:#a32d2d;border-radius:10px;padding:7px 14px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:6px">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+            ลบภาพทั้งหมด
+          </button>
+        </div>
+      </div>
+      <div class="sel-del-bar" id="sel-del-bar">
+        <span class="sel-del-count" id="sel-del-count">เลือก 0 รายการ</span>
+        <div class="sel-del-btns">
+          <button class="sel-all-btn" onclick="selToggleAll()">เลือกทั้งหมด</button>
+          <button class="del-sel-btn" id="del-sel-btn" onclick="deleteSelected()" disabled>&#128465; ลบภาพที่เลือก</button>
+          <button class="cancel-sel-btn" onclick="exitSelMode()">ยกเลิก</button>
+        </div>
+      </div>
+      <div id="hist-list"><div class="empty">ยังไม่มีข้อมูล</div></div>
+    </div>
+  </div>
+
+  <!-- ===== สถิติ ===== -->
+  <div id="sec-chart" class="sec">
+    <div class="stat-bar">
+      <div class="stat"><div class="stat-n" id="m-tot">0</div><div class="stat-l">ครั้งทั้งหมด</div></div>
+      <div class="stat"><div class="stat-n" id="m-mon">0</div><div class="stat-l">เดือนนี้</div></div>
+      <div class="stat"><div class="stat-n" id="m-wk">0</div><div class="stat-l">สัปดาห์นี้</div></div>
+      <div class="stat"><div class="stat-n" id="m-score" style="color:#c0392b">0</div><div class="stat-l">คะแนนรวม</div></div>
+    </div>
+    <!-- คะแนนสะสมต่อคน -->
+    <div class="card" style="margin-bottom:0">
+      <div class="clabel">⭐ คะแนนสะสมต่อคน (ทั้งหมด)</div>
+      <div id="score-rank"></div>
+    </div>
+    <div class="card">
+      <div class="clabel">จำนวนครั้งรายเดือน (6 เดือน)</div>
+      <div style="position:relative;height:230px"><canvas id="bar-c"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="clabel">หมวด 5ส ที่ทำบ่อย</div>
+      <div style="position:relative;height:210px"><canvas id="pie-c"></canvas></div>
+    </div>
+
+    <!-- ===== กราฟคะแนนรายเดือนต่อคน (NEW) ===== -->
+    <div class="card">
+      <div class="clabel">คะแนนเข้าร่วม 5ส รายเดือน (ต่อคน)</div>
+      <div class="month-sel" id="month-sel-btns"></div>
+      <div style="position:relative;height:260px"><canvas id="member-month-c"></canvas></div>
+    </div>
+
+    <div class="card">
+      <div class="clabel">สมาชิกที่เข้าร่วมสะสม (Top 10)</div>
+      <div id="member-rank"></div>
+    </div>
+    <div class="export-wrap">
+      <button class="export-btn-xl" onclick="exportExcel()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+        Export ข้อมูลสถิติ Excel (1 ไฟล์)
+      </button>
+      <button class="export-btn-all" onclick="exportAll()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Export Excel + ภาพทั้งหมด (ZIP)
+      </button>
+      <div class="export-progress" id="exp-prog">
+        <div style="font-size:13px;font-weight:600;color:#1a1a1a" id="exp-prog-label">กำลังสร้างไฟล์...</div>
+        <div class="export-progress-bar"><div class="export-progress-fill" id="exp-prog-fill"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== พื้นที่ 5ส (NEW TAB) ===== -->
+  <div id="sec-area" class="sec">
+    <div class="card" style="background:linear-gradient(135deg,#1D9E75 0%,#0F6E56 100%);color:#fff;padding:22px">
+      <div style="font-size:13px;font-weight:700;opacity:.75;margin-bottom:6px;letter-spacing:.06em;text-transform:uppercase">พื้นที่ทำ 5ส</div>
+      <div style="font-size:22px;font-weight:700">รายชื่อโซนรับผิดชอบ</div>
+      <div style="font-size:13px;opacity:.75;margin-top:4px">ทั้งหมด <span id="area-total">0</span> โซน</div>
+    </div>
+
+    <div id="area-cards-wrap">
+      <!-- filled by JS -->
+    </div>
+  </div>
+
+  <!-- ===== รางวัล (Achievement / Gamification) ===== -->
+  <div id="sec-award" class="sec">
+    <div id="award-wrap">
+      <!-- filled by JS -->
+    </div>
+  </div>
+
+</div>
+
+<!-- Lightbox -->
+<div id="lightbox" onclick="lbClose()">
+  <button id="lb-close" onclick="lbClose()">✕</button>
+  <img id="lb-img" src="" onclick="event.stopPropagation()">
+  <div id="lb-caption"></div>
+  <div id="lb-nav" onclick="event.stopPropagation()">
+    <button class="lb-btn" onclick="lbPrev()">‹</button>
+    <span id="lb-counter">1 / 1</span>
+    <button class="lb-btn" onclick="lbNext()">›</button>
+  </div>
+</div>
+
+<!-- PIN Modal -->
+<div id="pin-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9999;align-items:center;justify-content:center">
+  <div style="background:#fff;border-radius:20px;padding:32px 28px;width:300px;text-align:center;box-shadow:0 8px 40px rgba(0,0,0,.18)">
+    <div style="font-size:28px;margin-bottom:8px">🔒</div>
+    <div style="font-size:17px;font-weight:700;margin-bottom:4px" id="pin-title">หน้าสถิติ</div>
+    <div style="font-size:13px;color:#aaa;margin-bottom:20px">กรุณากรอกรหัส 4 หลัก</div>
+    <div style="display:flex;gap:10px;justify-content:center;margin-bottom:20px" id="pin-dots">
+      <div id="pd0" style="width:16px;height:16px;border-radius:50%;border:2px solid #ddd;background:#fff;transition:all .15s"></div>
+      <div id="pd1" style="width:16px;height:16px;border-radius:50%;border:2px solid #ddd;background:#fff;transition:all .15s"></div>
+      <div id="pd2" style="width:16px;height:16px;border-radius:50%;border:2px solid #ddd;background:#fff;transition:all .15s"></div>
+      <div id="pd3" style="width:16px;height:16px;border-radius:50%;border:2px solid #ddd;background:#fff;transition:all .15s"></div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;max-width:220px;margin:0 auto">
+      <button class="pin-key" onclick="pinKey('1')">1</button>
+      <button class="pin-key" onclick="pinKey('2')">2</button>
+      <button class="pin-key" onclick="pinKey('3')">3</button>
+      <button class="pin-key" onclick="pinKey('4')">4</button>
+      <button class="pin-key" onclick="pinKey('5')">5</button>
+      <button class="pin-key" onclick="pinKey('6')">6</button>
+      <button class="pin-key" onclick="pinKey('7')">7</button>
+      <button class="pin-key" onclick="pinKey('8')">8</button>
+      <button class="pin-key" onclick="pinKey('9')">9</button>
+      <button class="pin-key pin-del" onclick="pinDel()" style="background:#f5f5f5;color:#666">⌫</button>
+      <button class="pin-key" onclick="pinKey('0')">0</button>
+      <button class="pin-key pin-del" onclick="pinCancel()" style="background:#f5f5f5;color:#666;font-size:12px">ยกเลิก</button>
+    </div>
+    <div id="pin-err" style="color:#e53e3e;font-size:13px;margin-top:14px;height:18px"></div>
+  </div>
+</div>
+
+<!-- Confirm Delete Modal -->
+<div id="confirm-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9999;align-items:center;justify-content:center">
+  <div style="background:#fff;border-radius:20px;padding:32px 28px;width:310px;text-align:center;box-shadow:0 8px 40px rgba(0,0,0,.18)">
+    <div style="font-size:36px;margin-bottom:12px">🖼️</div>
+    <div style="font-size:18px;font-weight:700;margin-bottom:8px;color:#1a1a1a">ลบภาพทั้งหมด?</div>
+    <div style="font-size:14px;color:#888;margin-bottom:24px;line-height:1.6">ลบเฉพาะไฟล์ภาพของทุกรายการ<br>สถิติ/เหรียญตรา/พื้นที่/รางวัลยังอยู่ครบทุกหน้า<br>ภาพที่ลบแล้วกู้คืนไม่ได้</div>
+    <div style="display:flex;gap:10px">
+      <button onclick="cancelDelete()" style="flex:1;padding:13px;background:#f5f5f5;color:#555;border:none;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;font-family:inherit">ยกเลิก</button>
+      <button onclick="confirmDelete()" style="flex:1;padding:13px;background:#e53e3e;color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit">ลบเลย</button>
+    </div>
+  </div>
+</div>
+
+<!-- Confirm Delete Selected Modal -->
+<div id="confirm-sel-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9999;align-items:center;justify-content:center">
+  <div style="background:#fff;border-radius:20px;padding:32px 28px;width:310px;text-align:center;box-shadow:0 8px 40px rgba(0,0,0,.18)">
+    <div style="font-size:36px;margin-bottom:12px">🖼️</div>
+    <div style="font-size:18px;font-weight:700;margin-bottom:8px;color:#1a1a1a">ลบภาพของรายการที่เลือก?</div>
+    <div style="font-size:14px;color:#888;margin-bottom:6px;line-height:1.6" id="confirm-sel-count"></div>
+    <div style="font-size:13px;color:#aaa;margin-bottom:24px">สถิติ/เหรียญตรายังอยู่ครบทุกหน้า — ภาพที่ลบแล้วกู้คืนไม่ได้</div>
+    <div style="display:flex;gap:10px">
+      <button onclick="cancelDeleteSelected()" style="flex:1;padding:13px;background:#f5f5f5;color:#555;border:none;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;font-family:inherit">ยกเลิก</button>
+      <button onclick="confirmDeleteSelected()" style="flex:1;padding:13px;background:#e53e3e;color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit">ลบเลย</button>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<!-- Success Modal -->
+<div id="success-overlay">
+  <div class="success-box">
+    <div class="success-icon">✅</div>
+    <div class="success-title">บันทึกสำเร็จแล้ว!</div>
+    <div class="success-sub">กิจกรรม 5ส ถูกบันทึกเรียบร้อย</div>
+    <div class="success-detail" id="success-detail"></div>
+    <button class="success-ok" onclick="document.getElementById('success-overlay').classList.remove('show')">ตกลง</button>
+  </div>
+</div>
+
+<!-- ===== FIREBASE (type=module) ===== -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import {
+  getFirestore, collection, doc,
+  onSnapshot, setDoc, updateDoc, deleteField, deleteDoc, getDocs, writeBatch, query, orderBy
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+
+const firebaseConfig = {
+  apiKey: "AIzaSyCBM0A9iN6Ktd4_r9EFoHHPidTUNYi-eBY",
+  authDomain: "fir-record-5f018.firebaseapp.com",
+  projectId: "fir-record-5f018",
+  storageBucket: "fir-record-5f018.firebasestorage.app",
+  messagingSenderId: "770388815731",
+  appId: "1:770388815731:web:d49db486f488da16771f06",
+  measurementId: "G-QJQ6GSBKXC"
+};
+
+const app = initializeApp(firebaseConfig);
+const db  = getFirestore(app);
+
+// ===== CONSTANTS =====
+const MK='5s_members_v4', RK='5s_records_v5';
+const DNAMES=[
+  'สมพร พรมมา','ประสาน ลาภเหลือ',
+  'สมยา เต็งศิริ','กฤษดา พรมคร','รัตนะ เส็งดี','สมเกียรติ จงกลาง',
+  'ฐานลินต์ วินิจธนษรณ์','สมศักดิ์ วงษ์ประทัด','วันพิชิต สุจริตปฏิภาณ','ณชานนท์ คำหวาน',
+  'บัณฑิต เดชขุนทด','ภควัต สิงหล','ขวัญชัย พวงวงษา','พิสิฏฐ์ สุวรรณสิทธิ์',
+  'ชูเกียรติ สีแก้ว','ชินกร เต็งศิริ','วัชราภรณ์ ดิลกโกมล','ดลพักร เสาหงษ์',
+  'ปรัชญา รวยระรื่น','กรีทาพล มีทาทอง','กฤษดา เสมาทอง','ธวัชชัย แป้นจันทร์',
+  'ณฐกรณ์ จันทาบุตร','ธรรมนูญ บุตรเลียบ','ประติวัติ ศรีรักษา','สมศักดิ์ หวังกุลกลาง',
+  'ศุภชัย แสงกาวิน','ฉัตรชัย อดิสรณกุล','สหรัฐ ชื่นสว่าง','สฤษดิ์ ภู่ห้อย',
+  'เธียรธรรม ประทุมวงศ์','สุเมธ พยับเดช','ฐนพัฒน์ บุญเถื่อน','ปัภัสสิริย์ พรหมมินทร์',
+  'จักรพันธ์ ภู่ขาว'
+];
+
+// ===== AREAS =====
+const AREAS=[
+  'UNIT MIXING 1','UNIT MIXING 4','UNIT MIXING 5','UNIT MIXING 6',
+  'SD TANK 21-29','SD TANK 01-04','SD 321-324','SD 325-327',
+  'SD 501-504','SDS01-S02','SD 601-602','SD 328-331A','พื้นที่ LS',
+  'Office Mixing','Office Mix1','Office Mix4-6','SMP SOLUTION','Recovery'
+];
+const DAILY_AREAS=['UNIT MIXING 1','UNIT MIXING 4','UNIT MIXING 5','UNIT MIXING 6','SMP SOLUTION','Recovery'];
+const EVENT_AREAS={
+  1:['SD TANK 21-29','SD 321-324','SD 325-327'],
+  2:['SD TANK 01-04','SD 501-504','SDS01-S02'],
+  3:['SD 601-602','SD 328-331A','พื้นที่ LS'],
+  4:['Office Mixing','Office Mix1','Office Mix4-6'],
+  5:['SD TANK 21-29','SD 321-324','SD 325-327'],
+  6:['SD TANK 01-04','SD 501-504','SDS01-S02'],
+  0:['SD 601-602','SD 328-331A','พื้นที่ LS'],
+};
+const DAY_TH=['อาทิตย์','จันทร์','อังคาร','พุธ','พฤหัสบดี','ศุกร์','เสาร์'];
+
+function getTodayEventAreas(){ return EVENT_AREAS[new Date().getDay()]||[]; }
+
+// คะแนน: 1 คะแนนต่อ 1 คน ต่อ 1 วัน (ไม่ขึ้นกับจำนวนพื้นที่)
+function calcScore(areas, isoDate){
+  return {score:1, isDouble:false, eventAreas:[]};
+}
+window.calcScore=calcScore;
+
+// ตรวจว่าสมาชิกคนใดส่งวันนี้ไปแล้ว (อิงจากชื่อ + วันที่)
+function getTodayDateKey(){
+  const d=new Date();
+  return `${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`;
+}
+function getMembersAlreadySentToday(memberNames){
+  const todayKey=getTodayDateKey();
+  const alreadySent=[];
+  records.forEach(r=>{
+    if(!r.iso) return;
+    const rd=new Date(r.iso);
+    const rKey=`${rd.getFullYear()}-${rd.getMonth()+1}-${rd.getDate()}`;
+    if(rKey===todayKey){
+      (r.members||[]).forEach(n=>{ if(memberNames.includes(n)&&!alreadySent.includes(n)) alreadySent.push(n); });
+    }
+  });
+  return alreadySent;
+}
+
+let selectedAreas=[];
+
+function renderAreaGrid(){
+  const g=document.getElementById('area-grid');
+  const eventToday=getTodayEventAreas();
+  const dayName=DAY_TH[new Date().getDay()];
+  // Banner — บอกแค่ว่าวันนี้ต้องทำตรงไหน ไม่พูดถึงคะแนน
+  const banner=document.getElementById('event-banner');
+  const bannerText=document.getElementById('event-banner-text');
+  if(eventToday.length){
+    banner.style.display='flex';
+    bannerText.innerHTML=`<b>📅 วัน${dayName} ต้องทำ:</b> ${eventToday.join(', ')}`;
+  } else { banner.style.display='none'; }
+
+  g.innerHTML=AREAS.map(a=>{
+    const isDaily=DAILY_AREAS.includes(a);
+    const isEvent=eventToday.includes(a);
+    const isSmp=a==='SMP SOLUTION';
+    const sel=selectedAreas.includes(a);
+    let cls='area-btn';
+    if(isEvent) cls+=' event';
+    else if(isDaily||isSmp) cls+=' daily';
+    if(sel) cls+=' sel';
+    let badge='';
+    if(isDaily||isSmp) badge=`<span class="ab-badge green">ทุกวัน</span>`;
+    else if(isEvent) badge=`<span class="ab-badge blue">วันนี้</span>`;
+    return `<button class="${cls}" onclick="toggleArea('${a}',this)">${a}${badge}</button>`;
+  }).join('');
+}
+function toggleArea(name,el){
+  const idx=selectedAreas.indexOf(name);
+  if(idx>=0){ selectedAreas.splice(idx,1); el.classList.remove('sel'); }
+  else { selectedAreas.push(name); el.classList.add('sel'); }
+}
+window.renderAreaGrid=renderAreaGrid;
+window.toggleArea=toggleArea;
+
+function renderAreaPage(){
+  const wrap=document.getElementById('area-cards-wrap');
+  document.getElementById('area-total').textContent=AREAS.length;
+  const areaCounts={};
+  AREAS.forEach(a=>{ areaCounts[a]=0; });
+  records.forEach(r=>{ (r.areas||[]).forEach(a=>{ if(areaCounts[a]!==undefined) areaCounts[a]++; }); });
+  const colors=['#378ADD','#639922','#EF9F27','#7F77DD','#1D9E75','#e05050','#c47bbd','#4abecc','#e08e3a','#5aad8f','#9a7ad4','#d47a56','#58a8e8'];
+  wrap.innerHTML=AREAS.map((a,i)=>`
+    <div class="card" style="margin-bottom:12px;border-left:4px solid ${colors[i%colors.length]}">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <div>
+          <div style="font-size:15px;font-weight:700;color:#1a1a1a">${a}</div>
+          <div style="font-size:12px;color:#aaa;margin-top:3px">โซนที่ ${i+1} จากทั้งหมด ${AREAS.length} โซน</div>
+        </div>
+        <div style="text-align:center;background:#f7f7f7;border-radius:12px;padding:10px 16px">
+          <div style="font-size:22px;font-weight:700;color:${colors[i%colors.length]}">${areaCounts[a]}</div>
+          <div style="font-size:11px;color:#aaa">ครั้งที่ทำ</div>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+window.renderAreaPage=renderAreaPage;
+
+// ===== DATA =====
+let members=[], records=[], photos=[], photoHashes=[], nid=1;
+let bChart, pChart, mmChart;
+
+// ===== STATUS BANNER =====
+function showBanner(type, msg){
+  let b=document.getElementById('_fb_banner');
+  if(!b){ b=document.createElement('div'); b.id='_fb_banner';
+    b.style.cssText='position:fixed;top:0;left:0;right:0;padding:10px 16px;font-size:13px;font-weight:600;text-align:center;z-index:99999;line-height:1.5;display:none';
+    document.body.prepend(b); }
+  if(type==='loading'){ b.style.background='#f59e0b'; b.style.color='#fff'; b.style.display='block'; b.innerHTML=msg; }
+  else if(type==='error'){ b.style.background='#e53e3e'; b.style.color='#fff'; b.style.display='block'; b.innerHTML=msg+' <button onclick="this.parentElement.style.display=\'none\'" style="margin-left:8px;background:rgba(0,0,0,.2);border:none;color:#fff;padding:2px 10px;border-radius:6px;cursor:pointer;font-family:inherit">ปิด</button>'; }
+  else { b.style.display='none'; }
+}
+showBanner('loading','⏳ กำลังโหลดข้อมูลจาก Firebase...');
+
+// ===== FIREBASE REALTIME SYNC =====
+let membersLoaded=false, recordsLoaded=false;
+function checkAllLoaded(){ if(membersLoaded&&recordsLoaded){ showBanner('ok',''); renderMembers(); updateWizUI(); fixNameTypoOnce(); } }
+
+// ===== แก้ไขชื่อสะกดผิดครั้งเดียว: "ปรัญญา รวยระรื่น" -> "ปรัชญา รวยระรื่น" =====
+// แก้ทั้งรายชื่อสมาชิก และข้อมูลย้อนหลังทุกรายการ เพื่อให้คะแนนของคนนี้รวมกันเป็นคนเดียว
+let typoFixDone=false;
+async function fixNameTypoOnce(){
+  if(typoFixDone) return;
+  typoFixDone=true;
+  const OLD_NAME='ปรัญญา รวยระรื่น', NEW_NAME='ปรัชญา รวยระรื่น';
+  try{
+    const memberHit=members.find(m=>m.name===OLD_NAME);
+    if(memberHit){ memberHit.name=NEW_NAME; await svMember(memberHit); }
+    const badRecords=records.filter(r=>(r.members||[]).includes(OLD_NAME));
+    for(const r of badRecords){
+      const fixedMembers=r.members.map(n=>n===OLD_NAME?NEW_NAME:n);
+      await setDoc(doc(db,'5s_records',String(r.id)),{...r,members:fixedMembers});
+    }
+    if(memberHit||badRecords.length){ console.log(`[fix-typo] รวมคะแนน "${OLD_NAME}" -> "${NEW_NAME}" สำเร็จ (แก้ ${badRecords.length} รายการย้อนหลัง)`); }
+  }catch(e){ console.warn('[fix-typo] แก้ไขไม่สำเร็จ',e); }
+}
+
+// Members listener
+onSnapshot(collection(db,'5s_members'), snap=>{
+  if(snap.empty){
+    const batch=writeBatch(db);
+    DNAMES.forEach((n,i)=>{ batch.set(doc(db,'5s_members',String(i+1)),{id:i+1,name:n,checked:false}); });
+    batch.commit();
+  } else {
+    // เก็บ checked state เดิมไว้ ไม่ให้จอข้างๆ มาทับ
+    const prevChecked={};
+    members.forEach(m=>{ prevChecked[m.id]=m.checked; });
+    members=snap.docs.map(d=>{
+      const data=d.data();
+      return {...data, checked: prevChecked[data.id]||false};
+    }).sort((a,b)=>a.id-b.id);
+    nid=Math.max(...members.map(m=>m.id),0)+1;
+    if(!membersLoaded){ membersLoaded=true; checkAllLoaded(); }
+    else { renderMembers(); }
+  }
+}, err=>{ showBanner('error','❌ เชื่อมต่อ Firebase ไม่ได้: '+err.message); });
+
+// Records listener — newest first
+onSnapshot(query(collection(db,'5s_records'),orderBy('id','desc')), snap=>{
+  records=snap.docs.map(d=>d.data()).filter(r=>!r.isPhotoChunk);
+  if(!recordsLoaded){ recordsLoaded=true; checkAllLoaded(); }
+  else { renderHist(); }
+}, err=>{ showBanner('error','❌ โหลด records ไม่ได้: '+err.message); });
+
+// ===== HELPERS =====
+function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2600); }
+async function svMember(m){ await setDoc(doc(db,'5s_members',String(m.id)),m); }
+async function svAllMembers(){ const batch=writeBatch(db); members.forEach(m=>batch.set(doc(db,'5s_members',String(m.id)),m)); await batch.commit(); }
+
+// ===== TAB SWITCH =====
+function sw(name){
+  if(name==='hist'&&!pinUnlocked){ pinMode='hist'; pinCallback=null; document.getElementById('pin-title').textContent='หน้าประวัติ'; document.getElementById('pin-overlay').style.display='flex'; return; }
+  if(name==='chart'&&!pinUnlocked){ if(!checkPin()) return; }
+  ['rec','hist','chart','area','award'].forEach(n=>document.getElementById('sec-'+n).classList.toggle('on',n===name));
+  document.querySelectorAll('.tab').forEach((b,i)=>b.classList.toggle('on',['rec','hist','chart','area','award'][i]===name));
+  if(name==='hist') renderHist();
+  if(name==='chart') renderCharts();
+  if(name==='area') renderAreaPage();
+  if(name==='award') renderAwards();
+}
+window.sw=sw;
+
+// ===== MEMBERS =====
+function renderMembers(){
+  const q=document.getElementById('search').value.trim().toLowerCase();
+  const list=document.getElementById('mlist');
+  list.innerHTML='';
+  members.forEach((m,idx)=>{
+    const hide=q&&!m.name.toLowerCase().includes(q);
+    const row=document.createElement('div');
+    row.className='mrow'+(m.checked?' ck':'')+(hide?' hid':'');
+    row.innerHTML=`<span class="mnum">${idx+1}</span>
+      <input type="checkbox" class="mchk" ${m.checked?'checked':''} onchange="tick(${m.id})">
+      <span class="mname" id="nd${m.id}">${m.name}</span>
+      <input class="medit" id="ni${m.id}" value="${m.name}" onkeydown="if(event.key==='Enter')sn(${m.id})">
+      <button class="eb" id="eb${m.id}" onclick="pinThen(()=>se(${m.id}))">แก้ไข</button>
+      <button class="sb" id="sb${m.id}" onclick="sn(${m.id})">บันทึก</button>
+      <button class="db" onclick="pinThen(()=>dm(${m.id}))">ลบ</button>`;
+    list.appendChild(row);
+  });
+  const ck=members.filter(m=>m.checked).length, tot=members.length;
+  document.getElementById('sc').textContent=ck;
+  document.getElementById('st').textContent=tot;
+  document.getElementById('sp').textContent=tot?Math.round(ck/tot*100)+'%':'0%';
+}
+window.renderMembers=renderMembers;
+
+async function tick(id){
+  const m=members.find(x=>x.id===id);
+  if(m){ m.checked=!m.checked; renderMembers(); }
+  // ไม่ save checked ไป Firestore — เก็บ local เท่านั้น
+}
+window.tick=tick;
+function se(id){ document.getElementById('nd'+id).style.display='none'; document.getElementById('ni'+id).style.display='block'; document.getElementById('eb'+id).style.display='none'; document.getElementById('sb'+id).style.display='block'; document.getElementById('ni'+id).focus(); }
+window.se=se;
+async function sn(id){
+  const v=document.getElementById('ni'+id).value.trim(); if(!v)return;
+  const m=members.find(x=>x.id===id); if(!m) return;
+  const oldName=m.name;
+  m.name=v;
+  await svMember(m);
+  if(oldName && oldName!==v){
+    // เปลี่ยนชื่อ -> sync ชื่อเดิมในข้อมูลย้อนหลังทุกรายการ เพื่อให้คะแนนของคนนี้รวมเป็นคนเดียวเสมอ
+    // (ใช้ได้กับสมาชิกทุกคน ทั้งคนที่มีอยู่แล้วและคนที่เพิ่มเข้ามาใหม่ในอนาคต)
+    const affected=records.filter(r=>(r.members||[]).includes(oldName));
+    for(const r of affected){
+      const fixedMembers=r.members.map(n=>n===oldName?v:n);
+      await setDoc(doc(db,'5s_records',String(r.id)),{...r,members:fixedMembers});
+    }
+    if(affected.length) toast(`✅ แก้ชื่อ "${oldName}" → "${v}" และรวมคะแนนย้อนหลัง ${affected.length} รายการแล้ว`);
+  }
+}
+window.sn=sn;
+async function dm(id){ if(!confirm('ลบ "'+members.find(x=>x.id===id)?.name+'" ออกจากรายชื่อ?'))return; await deleteDoc(doc(db,'5s_members',String(id))); }
+window.dm=dm;
+function addMember(){ const inp=document.getElementById('new-name'); const n=inp.value.trim(); if(!n)return; pinThen(async()=>{ const newM={id:nid++,name:n,checked:false}; inp.value=''; await svMember(newM); }); }
+window.addMember=addMember;
+async function tickAll(){
+  const q=document.getElementById('search').value.trim().toLowerCase();
+  const vis=members.filter(m=>!q||m.name.toLowerCase().includes(q));
+  const all=vis.every(m=>m.checked);
+  vis.forEach(m=>m.checked=!all);
+  renderMembers();
+  // ไม่ save checked ไป Firestore
+}
+window.tickAll=tickAll;
+async function clearTick(){ members.forEach(m=>m.checked=false); renderMembers(); }
+window.clearTick=clearTick;
+
+// ===== STEP 2 TOGGLE =====
+function toggleStagItem(i){
+  const item=document.getElementById('si'+i);
+  const cb=document.getElementById('stag-cb'+i);
+  const chk=document.getElementById('sc'+i);
+  cb.checked=!cb.checked;
+  item.classList.toggle('off',!cb.checked);
+  item.classList.toggle('on',cb.checked);
+  chk.textContent=cb.checked?'✓':'○';
+}
+window.toggleStagItem=toggleStagItem;
+
+// ===== PHOTOS =====
+function hashStr(s){ let h=0; const step=Math.max(1,Math.floor(s.length/2000)); for(let i=0;i<s.length;i+=step){h=(Math.imul(31,h)+s.charCodeAt(i))|0;} return h.toString(36); }
+function getUsedHashes(){ return records.flatMap(r=>(r.photoHashes||[])); }
+
+// บีบอัดรูปแบบ progressive — บีบจนขนาด base64 ไม่เกิน maxBytes
+function compressImage(dataUrl, maxPx, quality){
+  return new Promise(resolve=>{
+    const img=new Image();
+    img.onload=()=>{
+      let w=img.width, h=img.height;
+      if(w>maxPx||h>maxPx){ const s=maxPx/Math.max(w,h); w=Math.round(w*s); h=Math.round(h*s); }
+      const c=document.createElement('canvas'); c.width=w; c.height=h;
+      c.getContext('2d').drawImage(img,0,0,w,h);
+      resolve(c.toDataURL('image/jpeg', quality));
+    };
+    img.onerror=()=>resolve(dataUrl);
+    img.src=dataUrl;
+  });
+}
+
+// บีบซ้ำจนขนาดไม่เกิน targetKB
+async function compressToTarget(dataUrl, targetKB=60){
+  // รอบแรก: 800px quality 0.6
+  let result=await compressImage(dataUrl,800,0.6);
+  if(result.length/1024<=targetKB) return result;
+  // รอบสอง: 600px quality 0.4
+  result=await compressImage(dataUrl,600,0.4);
+  if(result.length/1024<=targetKB) return result;
+  // รอบสาม: 400px quality 0.3
+  result=await compressImage(dataUrl,400,0.3);
+  if(result.length/1024<=targetKB) return result;
+  // รอบสี่: 300px quality 0.2 (สุดท้าย)
+  result=await compressImage(dataUrl,300,0.2);
+  return result;
+}
+
+function handlePhotos(e){
+  const files=[...e.target.files];
+  const usedHashes=getUsedHashes();
+  files.forEach(f=>{
+    // เช็คขนาดไฟล์เบื้องต้น (ไม่เกิน 20MB)
+    if(f.size>20*1024*1024){ toast('⚠️ ไฟล์ "'+f.name+'" ใหญ่เกิน 20MB'); return; }
+    const r=new FileReader();
+    r.onload=async ev=>{
+      // แสดง loading indicator
+      const g=document.getElementById('pgrid');
+      const placeholder=document.createElement('div');
+      placeholder.className='pthumb';
+      placeholder.style.cssText='display:flex;align-items:center;justify-content:center;background:#f5f5f5;font-size:11px;color:#aaa';
+      placeholder.textContent='กำลังบีบ...';
+      g.appendChild(placeholder);
+
+      // บีบให้ไม่เกิน 60KB (ปลอดภัยสำหรับ Firestore)
+      const compressed=await compressToTarget(ev.target.result, 60);
+      const sizeKB=(compressed.length/1024).toFixed(1);
+
+      const h=hashStr(compressed);
+      if(usedHashes.includes(h)||photoHashes.includes(h)){
+        g.removeChild(placeholder);
+        toast('⚠️ รูป "'+f.name+'" เคยส่งไปแล้ว');
+        return;
+      }
+      if(photos.length>=20){
+        g.removeChild(placeholder);
+        toast('⚠️ ส่งได้สูงสุด 20 ภาพต่อครั้ง');
+        return;
+      }
+      photos.push(compressed); photoHashes.push(h);
+      const idx=photos.length-1;
+      placeholder.style.cssText='';
+      placeholder.innerHTML=`<img src="${compressed}"><button class="pdel" onclick="rph(${idx},this.parentElement)">✕</button><span style="position:absolute;bottom:3px;left:3px;background:rgba(0,0,0,.5);color:#fff;font-size:9px;padding:1px 4px;border-radius:4px">${sizeKB}KB</span>`;
+    };
+    r.readAsDataURL(f);
+  });
+  e.target.value='';
+}
+window.handlePhotos=handlePhotos;
+function rph(i,el){ photos.splice(i,1); photoHashes.splice(i,1); el.remove(); }
+window.rph=rph;
+
+// ===== SAVE RECORD → Firestore =====
+async function saveRecord(){
+  // ตรวจรูปก่อนเลย
+  if(!photos.length){
+    const errEl=document.getElementById('err-3');
+    if(errEl){ errEl.textContent='⚠️ กรุณาอัปโหลดภาพอย่างน้อย 1 ภาพ'; setTimeout(()=>{errEl.textContent='';},3000); }
+    toast('⚠️ กรุณาอัปโหลดภาพอย่างน้อย 1 ภาพ');
+    return;
+  }
+  const checked=members.filter(m=>m.checked).map(m=>m.name);
+  if(!checked.length){toast('⚠️ กรุณาติ๊กสมาชิกอย่างน้อย 1 คน');return;}
+
+  // ตรวจว่าใครส่งวันนี้ไปแล้ว
+  const alreadySent=getMembersAlreadySentToday(checked);
+  if(alreadySent.length){
+    const names=alreadySent.join(', ');
+    toast(`⚠️ ${names} ได้รับคะแนนวันนี้ไปแล้ว`);
+    // แสดง error บนหน้าด้วย
+    const errEl=document.getElementById('err-3');
+    if(errEl){ errEl.textContent=`⚠️ สมาชิกต่อไปนี้ส่งวันนี้ไปแล้ว: ${names}`; setTimeout(()=>{errEl.textContent='';},5000); }
+    return;
+  }
+  const saveBtn=document.querySelector('.save-main');
+  if(saveBtn){saveBtn.disabled=true; saveBtn.textContent='⏳ กำลังบันทึก...';}
+  const restoreBtn=()=>{ if(saveBtn){saveBtn.disabled=false; saveBtn.textContent='✅ \u00a0บันทึกกิจกรรม 5ส';} };
+  const note='';
+  const tags=[...document.querySelectorAll('#wstep-1 input[type=checkbox]:checked')].map(x=>x.value);
+  const now=new Date();
+  const id=now.getTime();
+  const iso=now.toISOString();
+  const displayDate=now.toLocaleDateString('th-TH',{year:'numeric',month:'long',day:'numeric',weekday:'long'});
+  const displayTime=now.toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  const rec={id,iso,displayDate,displayTime,members:checked,tags,areas:selectedAreas.slice(),photos:photos.slice(),photoHashes:photoHashes.slice(),photoCount:photos.length,note,score:checked.length,scorePerMember:1,isDouble:false};
+  try{
+    await setDoc(doc(db,'5s_records',String(id)),rec);
+    restoreBtn();
+    const det=document.getElementById('success-detail');
+    const scoreHtml=`<b>⭐ คะแนน:</b> <span style="font-weight:700">คนละ 1 คะแนน (${checked.length} คน รวม ${checked.length} คะแนน)</span><br>`;
+    det.innerHTML=`${scoreHtml}<b>📅 วันที่:</b> ${displayDate}<br><b>🕐 เวลา:</b> ${displayTime}<br><b>👥 ทีม:</b> ${checked.length} คน<br><b>🏷 หมวด:</b> ${tags.length?tags.join(', '):'—'}<br><b>📍 พื้นที่:</b> ${selectedAreas.length?selectedAreas.join(', '):'—'}<br><b>📷 ภาพ:</b> ${photos.length} ภาพ`;
+    document.getElementById('success-overlay').classList.add('show');
+    photos=[]; photoHashes=[]; selectedAreas=[];
+    document.getElementById('pgrid').innerHTML='';
+    for(let i=0;i<5;i++){
+      const cb=document.getElementById('stag-cb'+i);
+      const item=document.getElementById('si'+i);
+      const chk=document.getElementById('sc'+i);
+      if(cb){cb.checked=false; item.classList.add('off'); item.classList.remove('on'); chk.textContent='○';}
+    }
+    clearTick();
+    resetWizard();
+  }catch(err){ restoreBtn(); toast('❌ บันทึกไม่สำเร็จ: '+err.message); }
+}
+window.saveRecord=saveRecord;
+
+// ===== HISTORY =====
+const SCLS=['s1','s2','s3','s4','s5'];
+let selMode=false, selSet=new Set();
+
+function renderHist(){
+  const list=document.getElementById('hist-list');
+  if(!records.length){list.innerHTML='<div class="empty">ยังไม่มีข้อมูลการบันทึก</div>';return;}
+  list.innerHTML=records.map((r,ri)=>{
+    const tags=(r.tags||[]).map((s,i)=>`<span class="rtag ${SCLS[i]||'s1'}">${s}</span>`).join('');
+    const areaStr=(r.areas&&r.areas.length)?`<div style="font-size:12px;color:#888;margin-top:4px">📍 ${r.areas.join(', ')}</div>`:'';
+    const sc=r.score!=null ? r.score : null;
+    const scoreHtml=sc!=null
+      ? `<div style="margin-top:5px"><span class="score-pill normal">⭐ ${sc} คะแนน</span></div>`
+      : '';    const photoList=(r.photos||[]);const hasPhotoFiles=photoList.length>0;
+    const storedPhotoCount=r.photoCount!=null?r.photoCount:photoList.length;
+    const photoGrid=hasPhotoFiles?`
+      <div class="hphoto-grid">
+        ${(photoList).map((p,pi)=>`
+          <div class="hphoto-thumb" onclick="${selMode?`toggleSelRow(${ri},event)`:`lbOpen(${ri},${pi})`}">
+            <img src="${p}" loading="lazy">
+          </div>`).join('')}
+      </div>
+      <div class="hphoto-count">📷 ${storedPhotoCount} ภาพ${selMode?'':' — แตะเพื่อขยาย'}</div>`:(storedPhotoCount>0?`<div class="hphoto-count" style="color:#bbb">📷 ${storedPhotoCount} ภาพ (ไฟล์ภาพถูกลบแล้ว — สถิติยังนับอยู่)</div>`:'');
+    const cbHtml=selMode?`<input type="checkbox" class="hrow-cb" ${selSet.has(ri)?'checked':''} onclick="toggleSelRow(${ri},event)">`:'';
+    const isChecked=selMode&&selSet.has(ri);
+    return `<div class="hrow${selMode?' hrow-sel':''}${isChecked?' checked-row':''}" ${selMode?`onclick="toggleSelRow(${ri},event)"`:''}>
+      ${cbHtml}<div class="hdot" style="margin-top:5px;flex-shrink:0"></div><div class="hmeta" style="width:100%;min-width:0">
+        <div class="hdate">${r.displayDate||''}</div>
+        <div class="htime">🕐 เวลา ${r.displayTime||''}</div>
+        <div class="hmembers">👥 ${(r.members||[]).join(', ')}</div>
+        <div style="margin-top:6px">${tags}</div>
+        ${areaStr}
+        ${scoreHtml}
+        ${r.note?`<div style="font-size:12px;color:#aaa;margin-top:5px">📝 ${r.note}</div>`:''}
+        ${photoGrid}
+      </div></div>`;
+  }).join('');
+  updateSelBar();
+}
+window.renderHist=renderHist;
+
+function enterSelMode(){ selMode=true; selSet=new Set(); document.getElementById('sel-del-bar').classList.add('on'); document.getElementById('enter-sel-btn').style.display='none'; renderHist(); }
+window.enterSelMode=enterSelMode;
+function exitSelMode(){ selMode=false; selSet=new Set(); document.getElementById('sel-del-bar').classList.remove('on'); document.getElementById('enter-sel-btn').style.display=''; renderHist(); }
+window.exitSelMode=exitSelMode;
+function toggleSelRow(ri,e){ if(e){e.stopPropagation();} if(selSet.has(ri)) selSet.delete(ri); else selSet.add(ri); renderHist(); }
+window.toggleSelRow=toggleSelRow;
+function selToggleAll(){ if(selSet.size===records.length){ selSet=new Set(); } else { selSet=new Set(records.map((_,i)=>i)); } renderHist(); }
+window.selToggleAll=selToggleAll;
+function updateSelBar(){ const n=selSet.size; const el=document.getElementById('sel-del-count'); const btn=document.getElementById('del-sel-btn'); if(el) el.textContent='เลือก '+n+' รายการ'; if(btn) btn.disabled=n===0; }
+function deleteSelected(){ if(!selSet.size) return; document.getElementById('confirm-sel-count').textContent=selSet.size+' รายการที่เลือก'; document.getElementById('confirm-sel-overlay').style.display='flex'; }
+window.deleteSelected=deleteSelected;
+async function confirmDeleteSelected(){
+  const ids=[...selSet].map(i=>records[i].id);
+  const batch=writeBatch(db);
+  ids.forEach(id=>{
+    const rec=records.find(r=>r.id===id);
+    const count=rec&&rec.photoCount!=null?rec.photoCount:(rec&&rec.photos||[]).length;
+    batch.update(doc(db,'5s_records',String(id)),{photos:deleteField(),photoHashes:deleteField(),photoCount:count});
+  });
+  await batch.commit();
+  const n=selSet.size;
+  selSet=new Set(); selMode=false;
+  document.getElementById('confirm-sel-overlay').style.display='none';
+  document.getElementById('sel-del-bar').classList.remove('on');
+  document.getElementById('enter-sel-btn').style.display='';
+  toast('🖼️ ลบภาพ '+n+' รายการแล้ว (สถิติยังอยู่ครบ)');
+}
+window.confirmDeleteSelected=confirmDeleteSelected;
+function cancelDeleteSelected(){ document.getElementById('confirm-sel-overlay').style.display='none'; }
+window.cancelDeleteSelected=cancelDeleteSelected;
+
+// ===== LIGHTBOX =====
+let lbRecIdx=0, lbPhotoIdx=0;
+function lbOpen(ri,pi){ lbRecIdx=ri; lbPhotoIdx=pi; lbRender(); document.getElementById('lightbox').classList.add('show'); document.body.style.overflow='hidden'; }
+window.lbOpen=lbOpen;
+function lbClose(){ document.getElementById('lightbox').classList.remove('show'); document.body.style.overflow=''; }
+window.lbClose=lbClose;
+function lbRender(){ const r=records[lbRecIdx]; const photos=r.photos||[]; document.getElementById('lb-img').src=photos[lbPhotoIdx]||''; document.getElementById('lb-counter').textContent=(lbPhotoIdx+1)+' / '+photos.length; document.getElementById('lb-caption').textContent=`${r.displayDate||''} — ${(r.areas||[]).join(', ')||'ไม่ระบุพื้นที่'}`; }
+function lbPrev(){ const photos=records[lbRecIdx].photos||[]; lbPhotoIdx=(lbPhotoIdx-1+photos.length)%photos.length; lbRender(); }
+window.lbPrev=lbPrev;
+function lbNext(){ const photos=records[lbRecIdx].photos||[]; lbPhotoIdx=(lbPhotoIdx+1)%photos.length; lbRender(); }
+window.lbNext=lbNext;
+document.addEventListener('keydown',e=>{ if(!document.getElementById('lightbox').classList.contains('show'))return; if(e.key==='ArrowRight')lbNext(); else if(e.key==='ArrowLeft')lbPrev(); else if(e.key==='Escape')lbClose(); });
+
+// ===== CHARTS =====
+let selectedMonthForMember=null;
+function renderCharts(){
+  const now=new Date(), wk=new Date(now); wk.setDate(wk.getDate()-7);
+  const ms=new Date(now.getFullYear(),now.getMonth(),1);
+  document.getElementById('m-tot').textContent=records.length;
+  document.getElementById('m-mon').textContent=records.filter(r=>new Date(r.iso)>=ms).length;
+  document.getElementById('m-wk').textContent=records.filter(r=>new Date(r.iso)>=wk).length;
+  // คะแนนรวมทั้งหมด = จำนวนสมาชิก × 1 ต่อ record
+  const totalScore=records.reduce((s,r)=>s+(r.members||[]).length,0);
+  document.getElementById('m-score').textContent=totalScore;
+  // คะแนนสะสมต่อคน — แต่ละคนได้ 1 คะแนนต่อ record ที่เข้าร่วม
+  const memberScore={};
+  records.forEach(r=>{
+    (r.members||[]).forEach(n=>{ memberScore[n]=(memberScore[n]||0)+1; });
+  });
+  const scoreRanked=Object.entries(memberScore).sort((a,b)=>b[1]-a[1]).slice(0,15);
+  const palette2=['#c0392b','#e67e00','#f39c12','#1D9E75','#378ADD','#7F77DD'];
+  document.getElementById('score-rank').innerHTML=scoreRanked.length
+    ? scoreRanked.map(([n,sc],i)=>`<div class="rank-row">
+        <span style="font-size:13px;color:#ccc;min-width:24px;text-align:center">${i+1}</span>
+        <span style="flex:1;font-size:14px">${n}</span>
+        <span style="font-size:15px;font-weight:700;color:${palette2[Math.min(i,5)]}">${sc} คะแนน</span>
+      </div>`).join('')
+    : '<div class="empty">ยังไม่มีข้อมูล</div>';
+  const months=[],cnts=[];
+  for(let i=5;i>=0;i--){ const d=new Date(now.getFullYear(),now.getMonth()-i,1); months.push(d.toLocaleDateString('th-TH',{month:'short',year:'2-digit'})); const e=new Date(d.getFullYear(),d.getMonth()+1,1); cnts.push(records.filter(r=>{const rd=new Date(r.iso);return rd>=d&&rd<e;}).length); }
+  const sc={สะสาง:0,สะดวก:0,สะอาด:0,สุขลักษณะ:0,สร้างนิสัย:0};
+  records.forEach(r=>(r.tags||[]).forEach(t=>{if(sc[t]!==undefined)sc[t]++;}));
+  const mc={};
+  records.forEach(r=>(r.members||[]).forEach(n=>{mc[n]=(mc[n]||0)+1;}));
+  const ranked=Object.entries(mc).sort((a,b)=>b[1]-a[1]).slice(0,10);
+  document.getElementById('member-rank').innerHTML=ranked.length?ranked.map(([n,c],i)=>`<div class="rank-row"><span style="font-size:13px;color:#ccc;min-width:24px;text-align:center">${i+1}</span><span style="flex:1;font-size:14px">${n}</span><span style="font-size:15px;font-weight:700;color:#1D9E75">${c} ครั้ง</span></div>`).join(''):'<div class="empty">ยังไม่มีข้อมูล</div>';
+  if(bChart)bChart.destroy(); if(pChart)pChart.destroy();
+  bChart=new Chart(document.getElementById('bar-c'),{type:'bar',data:{labels:months,datasets:[{label:'ครั้ง',data:cnts,backgroundColor:'#378ADD',borderRadius:6,borderSkipped:false}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,ticks:{stepSize:1},grid:{color:'rgba(0,0,0,.04)'}},x:{grid:{display:false}}}}});
+  pChart=new Chart(document.getElementById('pie-c'),{type:'doughnut',data:{labels:Object.keys(sc),datasets:[{data:Object.values(sc),backgroundColor:['#378ADD','#639922','#EF9F27','#7F77DD','#1D9E75'],borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{font:{size:13},boxWidth:12,padding:10}}}}});
+  renderMemberMonthChart(now);
+}
+window.renderCharts=renderCharts;
+
+function renderMemberMonthChart(now){
+  const monthKeys=[], monthLabels=[];
+  for(let i=5;i>=0;i--){ const d=new Date(now.getFullYear(),now.getMonth()-i,1); const key=d.getFullYear()+'-'+(d.getMonth()+1); monthKeys.push(key); monthLabels.push(d.toLocaleDateString('th-TH',{month:'short',year:'2-digit'})); }
+  if(!selectedMonthForMember) selectedMonthForMember=monthKeys[monthKeys.length-1];
+  const btns=document.getElementById('month-sel-btns');
+  btns.innerHTML=monthKeys.map((k,i)=>`<button class="msel-btn${k===selectedMonthForMember?' on':''}" onclick="selectMemberMonth('${k}')">${monthLabels[i]}</button>`).join('');
+  const [yr,mo]=selectedMonthForMember.split('-').map(Number);
+  const start=new Date(yr,mo-1,1), end=new Date(yr,mo,1);
+  const monthRecs=records.filter(r=>{const d=new Date(r.iso);return d>=start&&d<end;});
+  const scoreMap={};
+  monthRecs.forEach(r=>{
+    (r.members||[]).forEach(n=>{scoreMap[n]=(scoreMap[n]||0)+1;});
+  });
+  const sorted=Object.entries(scoreMap).sort((a,b)=>b[1]-a[1]).slice(0,15);
+  const labels=sorted.map(x=>x[0]);
+  const data=sorted.map(x=>x[1]);
+  const palette=['#378ADD','#1D9E75','#EF9F27','#7F77DD','#e05050','#639922','#c47bbd','#4abecc','#e08e3a','#5aad8f','#9a7ad4','#d47a56','#58a8e8','#e0a030','#66b09a'];
+  if(mmChart)mmChart.destroy();
+  mmChart=new Chart(document.getElementById('member-month-c'),{type:'bar',data:{labels:labels.length?labels:['(ไม่มีข้อมูล)'],datasets:[{label:'คะแนนสะสม',data:data.length?data:[0],backgroundColor:labels.map((_,i)=>palette[i%palette.length]),borderRadius:6,borderSkipped:false}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>`${ctx.raw} คะแนน`}}},scales:{x:{beginAtZero:true,ticks:{stepSize:1},grid:{color:'rgba(0,0,0,.04)'}},y:{grid:{display:false},ticks:{font:{size:12}}}}}});
+}
+function selectMemberMonth(key){ selectedMonthForMember=key; renderMemberMonthChart(new Date()); }
+window.selectMemberMonth=selectMemberMonth;
+
+// ===== ACHIEVEMENTS / รางวัล (Gamification) =====
+const BADGE_DAYS=[
+  {n:7,  icon:'🥉', label:'7 วัน',   full:'ทำครบ 7 วัน'},
+  {n:30, icon:'🥈', label:'30 วัน',  full:'ทำครบ 30 วัน'},
+  {n:100,icon:'🥇', label:'100 วัน', full:'ทำครบ 100 วัน'}
+];
+const BADGE_PHOTOS=[
+  {n:50, icon:'📷', label:'50 รูป',  full:'ถ่ายรูปครบ 50 รูป'},
+  {n:100,icon:'📸', label:'100 รูป', full:'ถ่ายรูปครบ 100 รูป'},
+  {n:300,icon:'🎬', label:'300 รูป', full:'ถ่ายรูปครบ 300 รูป'}
+];
+const BADGE_AREA={icon:'🗺️', label:'ครบพื้นที่', full:'ทำครบทุกพื้นที่ ('+AREAS.length+' โซน)'};
+const BADGE_CHAMP={icon:'👑', label:'Champion', full:'Champion เดือนนี้'};
+
+// สถิติสะสมต่อคน: จำนวนวันที่เข้าร่วม, จำนวนรูปที่ทีมถ่ายในวันที่เข้าร่วม, พื้นที่ที่เคยทำ (ไม่ซ้ำ)
+function computeMemberStats(){
+  const stats={};
+  records.forEach(r=>{
+    (r.members||[]).forEach(n=>{
+      if(!stats[n]) stats[n]={days:0,photos:0,areas:new Set()};
+      stats[n].days+=1;
+      stats[n].photos+=(r.photoCount!=null?r.photoCount:(r.photos||[]).length);
+      (r.areas||[]).forEach(a=>stats[n].areas.add(a));
+    });
+  });
+  return stats;
+}
+function getMonthScoreMap(year,month){
+  const ms=new Date(year,month,1), me=new Date(year,month+1,1);
+  const sc={};
+  records.forEach(r=>{ const d=new Date(r.iso); if(d>=ms&&d<me){ (r.members||[]).forEach(n=>{sc[n]=(sc[n]||0)+1;}); } });
+  return sc;
+}
+function getChampionsOf(sc){
+  const entries=Object.entries(sc);
+  if(!entries.length) return {champs:[],max:0};
+  const max=Math.max(...entries.map(e=>e[1]));
+  return {champs:entries.filter(([,c])=>c===max).map(([n])=>n), max};
+}
+
+function renderAwards(){
+  const wrap=document.getElementById('award-wrap');
+  if(!wrap) return;
+  const now=new Date();
+  const stats=computeMemberStats();
+  const thisMonthSc=getMonthScoreMap(now.getFullYear(),now.getMonth());
+  const {champs,max}=getChampionsOf(thisMonthSc);
+
+  // แบนเนอร์ Champion เดือนนี้
+  const champHtml=(champs.length&&max>0)
+    ? `<div class="champ-banner">
+        <div class="champ-crown">👑</div>
+        <div class="champ-label">Champion เดือนนี้ — ${now.toLocaleDateString('th-TH',{month:'long',year:'numeric'})}</div>
+        <div class="champ-name">${champs.join(' 🤝 ')}</div>
+        <div class="champ-score">⭐ ${max} คะแนนในเดือนนี้</div>
+      </div>`
+    : `<div class="champ-banner" style="opacity:.55">
+        <div class="champ-crown">👑</div>
+        <div class="champ-label">Champion เดือนนี้</div>
+        <div class="champ-name">ยังไม่มีข้อมูลเดือนนี้</div>
+      </div>`;
+
+  // เกณฑ์รางวัลทั้งหมด (legend)
+  const legendHtml=`<div class="card">
+    <div class="clabel">🏅 เกณฑ์รางวัลทั้งหมด</div>
+    <div class="badge-legend">
+      ${[...BADGE_DAYS,...BADGE_PHOTOS,BADGE_AREA,BADGE_CHAMP].map(b=>`<div class="badge-legend-item"><div class="badge-legend-icon">${b.icon}</div><div class="badge-legend-label">${b.full}</div></div>`).join('')}
+    </div>
+  </div>`;
+
+  // ทำเนียบแชมป์ 6 เดือนล่าสุด
+  const hofRows=[];
+  for(let i=5;i>=0;i--){
+    const d=new Date(now.getFullYear(),now.getMonth()-i,1);
+    const {champs:c,max:m}=getChampionsOf(getMonthScoreMap(d.getFullYear(),d.getMonth()));
+    hofRows.push({label:d.toLocaleDateString('th-TH',{month:'short',year:'2-digit'}),champs:c,max:m});
+  }
+  const hofHtml=`<div class="card">
+    <div class="clabel">📜 ทำเนียบแชมป์ (6 เดือนล่าสุด)</div>
+    ${hofRows.map(h=>`<div class="hof-row"><span class="hof-month">${h.label}</span><span class="hof-champ">${h.champs.length?'👑 '+h.champs.join(', '):'—'}</span><span class="hof-score">${h.max?h.max+' คะแนน':''}</span></div>`).join('')}
+  </div>`;
+
+  // เหรียญตราของแต่ละคน
+  const names=Array.from(new Set([...members.map(m=>m.name),...Object.keys(stats)]));
+  const cards=names.map(n=>{
+    const s=stats[n]||{days:0,photos:0,areas:new Set()};
+    const isChamp=champs.includes(n)&&max>0;
+    const dayBadges=BADGE_DAYS.map(b=>({...b,on:s.days>=b.n}));
+    const photoBadges=BADGE_PHOTOS.map(b=>({...b,on:s.photos>=b.n}));
+    const areaOn=s.areas.size>=AREAS.length;
+    const nextDay=BADGE_DAYS.find(b=>s.days<b.n);
+    const nextPhoto=BADGE_PHOTOS.find(b=>s.photos<b.n);
+    const totalEarned=dayBadges.filter(b=>b.on).length+photoBadges.filter(b=>b.on).length+(areaOn?1:0)+(isChamp?1:0);
+    const badgesHtml=[
+      ...dayBadges.map(b=>`<span class="badge-pill${b.on?' on':''}" title="${b.full}"><span class="bp-icon">${b.icon}</span>${b.label}</span>`),
+      ...photoBadges.map(b=>`<span class="badge-pill${b.on?' on':''}" title="${b.full}"><span class="bp-icon">${b.icon}</span>${b.label}</span>`),
+      `<span class="badge-pill${areaOn?' on':''}" title="${BADGE_AREA.full}"><span class="bp-icon">${BADGE_AREA.icon}</span>${BADGE_AREA.label}</span>`,
+      `<span class="badge-pill${isChamp?' on':''}" title="${BADGE_CHAMP.full}"><span class="bp-icon">${BADGE_CHAMP.icon}</span>${BADGE_CHAMP.label}</span>`
+    ].join('');
+    const progressHtml=`
+      ${nextDay?`<div class="award-progress">🥉 สู่เหรียญถัดไป: ${s.days}/${nextDay.n} วัน<div class="award-bar-track"><div class="award-bar-fill" style="width:${Math.min(100,s.days/nextDay.n*100)}%"></div></div></div>`:''}
+      ${nextPhoto?`<div class="award-progress">📷 สู่เหรียญถัดไป: ${s.photos}/${nextPhoto.n} รูป<div class="award-bar-track"><div class="award-bar-fill" style="width:${Math.min(100,s.photos/nextPhoto.n*100)}%;background:#378ADD"></div></div></div>`:''}
+    `;
+    return {n,totalEarned,score:s.days,html:`<div class="award-card${isChamp?' champ':''}">
+      <div class="award-top">
+        <div><div class="award-name">${isChamp?'👑 ':''}${n}</div><div class="award-sub">${s.days} วัน · ${s.photos} รูป · ${s.areas.size}/${AREAS.length} โซน</div></div>
+        <div class="award-medals">${totalEarned} 🏅</div>
+      </div>
+      <div class="badge-row">${badgesHtml}</div>
+      ${progressHtml}
+    </div>`};
+  }).sort((a,b)=>b.totalEarned-a.totalEarned || b.score-a.score);
+
+  wrap.innerHTML=champHtml+legendHtml+hofHtml
+    +`<div class="award-section-label">🎯 เหรียญตราของแต่ละคน</div>`
+    +(cards.length?cards.map(c=>c.html).join(''):'<div class="empty">ยังไม่มีข้อมูล</div>');
+}
+window.renderAwards=renderAwards;
+
+// ===== EXPORT EXCEL =====
+function buildWorkbook(){
+  const wb=XLSX.utils.book_new();
+  const now=new Date();
+  const ms=new Date(now.getFullYear(),now.getMonth(),1);
+  const wk=new Date(now); wk.setDate(wk.getDate()-7);
+  const sc2={สะสาง:0,สะดวก:0,สะอาด:0,สุขลักษณะ:0,สร้างนิสัย:0};
+  records.forEach(r=>(r.tags||[]).forEach(t=>{if(sc2[t]!==undefined)sc2[t]++;}));
+  const rows0=[['📊 รายงานภาพรวม 5ส',''],['วันที่ Export',now.toLocaleDateString('th-TH',{year:'numeric',month:'long',day:'numeric'})],['เวลา',now.toLocaleTimeString('th-TH')],[''],['สรุปสถิติ','จำนวน'],['กิจกรรมทั้งหมด',records.length],['กิจกรรมเดือนนี้',records.filter(r=>new Date(r.iso)>=ms).length],['กิจกรรมสัปดาห์นี้',records.filter(r=>new Date(r.iso)>=wk).length],[''],['หมวด 5ส','จำนวนครั้ง'],...Object.entries(sc2).map(([k,v])=>[k,v])];
+  const ws0=XLSX.utils.aoa_to_sheet(rows0); ws0['!cols']=[{wch:30},{wch:20}]; XLSX.utils.book_append_sheet(wb,ws0,'ภาพรวม');
+  const rows1=[['ลำดับ','วันที่','เวลา','สมาชิกที่เข้าร่วม','จำนวนสมาชิก','หมวด 5ส','พื้นที่','คะแนนต่อคน','หมายเหตุ','จำนวนภาพ']];
+  records.forEach((r,i)=>{ rows1.push([i+1,r.displayDate||'',r.displayTime||'',(r.members||[]).join(', '),(r.members||[]).length,(r.tags||[]).join(', '),(r.areas||[]).join(', '),1,r.note||'',(r.photoCount!=null?r.photoCount:(r.photos||[]).length)]); });
+  const ws1=XLSX.utils.aoa_to_sheet(rows1); ws1['!cols']=[{wch:6},{wch:30},{wch:14},{wch:60},{wch:14},{wch:30},{wch:30},{wch:14},{wch:40},{wch:12}]; XLSX.utils.book_append_sheet(wb,ws1,'ประวัติกิจกรรม');
+  const mc={};records.forEach(r=>(r.members||[]).forEach(n=>{mc[n]=(mc[n]||0)+1;}));
+  const rows2=[['ชื่อสมาชิก','จำนวนครั้งที่เข้าร่วม']]; Object.entries(mc).sort((a,b)=>b[1]-a[1]).forEach(([n,c])=>rows2.push([n,c]));
+  const ws2=XLSX.utils.aoa_to_sheet(rows2); ws2['!cols']=[{wch:30},{wch:20}]; XLSX.utils.book_append_sheet(wb,ws2,'สถิติสมาชิก');
+  const rows3=[['เดือน','ชื่อสมาชิก','คะแนนสะสม','จำนวนครั้ง']];
+  for(let i=5;i>=0;i--){ const d=new Date(now.getFullYear(),now.getMonth()-i,1); const e=new Date(d.getFullYear(),d.getMonth()+1,1); const mLabel=d.toLocaleDateString('th-TH',{month:'long',year:'numeric'}); const mRecs=records.filter(r=>{const rd=new Date(r.iso);return rd>=d&&rd<e;}); const sm={}; const cnt={}; mRecs.forEach(r=>{ (r.members||[]).forEach(n=>{sm[n]=(sm[n]||0)+1; cnt[n]=(cnt[n]||0)+1;}); }); Object.entries(sm).sort((a,b)=>b[1]-a[1]).forEach(([n,sc])=>rows3.push([mLabel,n,sc,cnt[n]||0])); }
+  const ws3=XLSX.utils.aoa_to_sheet(rows3); ws3['!cols']=[{wch:25},{wch:30},{wch:22}]; XLSX.utils.book_append_sheet(wb,ws3,'คะแนนรายเดือน');
+  const ac={}; AREAS.forEach(a=>{ac[a]=0;}); records.forEach(r=>(r.areas||[]).forEach(a=>{if(ac[a]!==undefined)ac[a]++;}));
+  const rows4=[['พื้นที่','จำนวนครั้งที่ทำ 5ส']]; Object.entries(ac).sort((a,b)=>b[1]-a[1]).forEach(([k,v])=>rows4.push([k,v]));
+  const ws4=XLSX.utils.aoa_to_sheet(rows4); ws4['!cols']=[{wch:30},{wch:20}]; XLSX.utils.book_append_sheet(wb,ws4,'สถิติพื้นที่');
+  return wb;
+}
+function exportExcel(){ if(!records.length){toast('⚠️ ยังไม่มีข้อมูลสำหรับ Export');return;} const wb=buildWorkbook(); const now=new Date(); const fname=`5S_Report_${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}.xlsx`; XLSX.writeFile(wb,fname); toast('📥 Export Excel สำเร็จ (5 sheet) — '+fname); }
+window.exportExcel=exportExcel;
+
+async function exportAll(){
+  if(!records.length){toast('⚠️ ยังไม่มีข้อมูลสำหรับ Export');return;}
+  const allPhotos=records.flatMap(r=>r.photos||[]);
+  if(!allPhotos.length){ exportExcel(); toast('⚠️ ไม่มีภาพในระบบ — Export เฉพาะ Excel'); return; }
+  const progBox=document.getElementById('exp-prog'),progFill=document.getElementById('exp-prog-fill'),progLabel=document.getElementById('exp-prog-label');
+  progBox.style.display='block'; progFill.style.width='0%'; progLabel.textContent='กำลังสร้างไฟล์ ZIP...';
+  const zip=new JSZip(); const now=new Date();
+  const dateStr=`${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}`;
+  progLabel.textContent='กำลังสร้าง Excel...';
+  const wb=buildWorkbook(); const xlData=XLSX.write(wb,{bookType:'xlsx',type:'base64'});
+  zip.file(`5S_Report_${dateStr}.xlsx`,xlData,{base64:true}); progFill.style.width='10%';
+  let totalPhotos=0; records.forEach(r=>{totalPhotos+=(r.photos||[]).length;}); let done=0;
+  for(let ri=0;ri<records.length;ri++){ const r=records[ri]; const ps=r.photos||[]; if(!ps.length)continue; const safeName=(r.displayDate||`record_${ri}`).replace(/[/\\:*?"<>|]/g,'_'); const folder=`ภาพ_5ส/${String(ri+1).padStart(3,'0')}_${safeName}/`; for(let pi=0;pi<ps.length;pi++){ const dataUrl=ps[pi]; const base64=dataUrl.split(',')[1]; const ext=dataUrl.split(';')[0].split('/')[1]||'jpg'; const fname=`ภาพ_${String(pi+1).padStart(2,'0')}.${ext}`; zip.file(folder+fname,base64,{base64:true}); done++; const pct=Math.round(10+(done/totalPhotos)*85); progFill.style.width=pct+'%'; progLabel.textContent=`กำลังแพ็ครูป... ${done}/${totalPhotos} ภาพ`; if(done%10===0)await new Promise(r=>setTimeout(r,0)); } }
+  progLabel.textContent='กำลัง Generate ZIP...'; progFill.style.width='96%';
+  const blob=await zip.generateAsync({type:'blob',compression:'DEFLATE',compressionOptions:{level:6}},meta=>{progFill.style.width=Math.round(96+(meta.percent*0.04))+'%';});
+  progFill.style.width='100%'; progLabel.textContent='✅ เสร็จแล้ว! กำลังดาวน์โหลด...';
+  const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download=`5S_Report_${dateStr}_พร้อมภาพ.zip`; a.click(); URL.revokeObjectURL(url);
+  setTimeout(()=>{progBox.style.display='none'; progFill.style.width='0%';},3000);
+  toast(`📦 Export ZIP สำเร็จ — Excel + ${totalPhotos} ภาพ`);
+}
+window.exportAll=exportAll;
+
+// ===== DELETE ALL PHOTOS (เก็บสถิติทุกหน้าไว้ครบ) =====
+function deleteAllRecords(){ document.getElementById('confirm-overlay').style.display='flex'; }
+window.deleteAllRecords=deleteAllRecords;
+async function confirmDelete(){
+  const targets=records.filter(r=>(r.photos||[]).length>0);
+  const batch=writeBatch(db);
+  targets.forEach(r=>{
+    const count=r.photoCount!=null?r.photoCount:(r.photos||[]).length;
+    batch.update(doc(db,'5s_records',String(r.id)),{photos:deleteField(),photoHashes:deleteField(),photoCount:count});
+  });
+  await batch.commit();
+  document.getElementById('confirm-overlay').style.display='none';
+  toast('🖼️ ลบภาพทั้งหมดแล้ว (สถิติ/เหรียญตรา/พื้นที่/รางวัลยังอยู่ครบ)');
+}
+window.confirmDelete=confirmDelete;
+function cancelDelete(){ document.getElementById('confirm-overlay').style.display='none'; }
+window.cancelDelete=cancelDelete;
+
+// ===== PIN LOCK =====
+const PIN='3179';
+let pinBuf='', pinUnlocked=false, pinCallback=null, pinMode='chart';
+function checkPin(){ if(pinUnlocked) return true; pinMode='chart'; pinCallback=null; document.getElementById('pin-overlay').style.display='flex'; document.getElementById('pin-title').textContent='หน้าสถิติ'; return false; }
+function pinThen(cb){ if(pinUnlocked){cb();return;} pinMode='action'; pinCallback=cb; document.getElementById('pin-title').textContent='ยืนยันตัวตน'; document.getElementById('pin-overlay').style.display='flex'; }
+window.pinThen=pinThen;
+function pinKey(d){ if(pinBuf.length>=4)return; pinBuf+=d; updateDots(); if(pinBuf.length===4){ if(pinBuf===PIN){ pinUnlocked=true; document.getElementById('pin-overlay').style.display='none'; pinBuf=''; updateDots(); if(pinMode==='chart'){sw('chart');}else if(pinMode==='hist'){sw('hist');}else if(pinCallback){const fn=pinCallback;pinCallback=null;fn();} }else{ document.getElementById('pin-err').textContent='รหัสไม่ถูกต้อง ลองใหม่อีกครั้ง'; setTimeout(()=>{pinBuf='';updateDots();document.getElementById('pin-err').textContent='';},900); } } }
+window.pinKey=pinKey;
+function pinDel(){ if(pinBuf.length>0){pinBuf=pinBuf.slice(0,-1); updateDots();} }
+window.pinDel=pinDel;
+function pinCancel(){ pinBuf=''; pinCallback=null; updateDots(); document.getElementById('pin-overlay').style.display='none'; document.getElementById('pin-err').textContent=''; }
+window.pinCancel=pinCancel;
+function updateDots(){ for(let i=0;i<4;i++){const d=document.getElementById('pd'+i); d.style.background=i<pinBuf.length?'#1a1a1a':'#fff'; d.style.borderColor=i<pinBuf.length?'#1a1a1a':'#ddd';} }
+
+// ===== WIZARD =====
+const WIZ_TITLES=['ทีมงาน','หมวด 5ส','พื้นที่ 5ส','ภาพประกอบ'];
+let wizStep=0, wizDone=[false,false,false,false];
+function updateWizUI(){
+  for(let i=0;i<4;i++){ document.getElementById('wstep-'+i).style.display=i===wizStep?'block':'none'; const dot=document.getElementById('dot'+i); dot.className='wiz-dot'+(i===wizStep?' on':wizDone[i]?' done':''); }
+  document.getElementById('wiz-step-label').textContent='ขั้นที่ '+(wizStep+1)+' / 4';
+  document.getElementById('wiz-step-title').textContent=WIZ_TITLES[wizStep];
+  document.getElementById('wiz-bar').style.width=(((wizStep+1)/4)*100)+'%';
+  document.querySelectorAll('.wiz-err').forEach(e=>e.textContent='');
+}
+window.updateWizUI=updateWizUI;
+function nextStep(from){
+  const err=document.getElementById('err-'+from);
+  if(from===0){if(!members.filter(m=>m.checked).length){err.textContent='⚠️ กรุณาติ๊กสมาชิกอย่างน้อย 1 คน';return;}}
+  else if(from===1){const checked=[...document.querySelectorAll('#wstep-1 input[type=checkbox]:checked')];if(!checked.length){err.textContent='⚠️ กรุณาเลือกหมวด 5ส อย่างน้อย 1 หมวด';return;}}
+  else if(from===2){if(!selectedAreas.length){err.textContent='⚠️ กรุณาเลือกพื้นที่อย่างน้อย 1 โซน';return;}}
+  else if(from===3){
+    if(!photos.length){err.textContent='⚠️ กรุณาอัปโหลดภาพอย่างน้อย 1 ภาพ';return;}
+    // ขั้นสุดท้าย — บันทึกเลย
+    wizDone[from]=true;
+    saveRecord();
+    return;
+  }
+  wizDone[from]=true; wizStep=from+1; updateWizUI(); if(wizStep===2)renderAreaGrid(); window.scrollTo({top:0,behavior:'smooth'});
+}
+window.nextStep=nextStep;
+function prevStep(from){ wizStep=from-1; updateWizUI(); if(wizStep===2)renderAreaGrid(); window.scrollTo({top:0,behavior:'smooth'}); }
+window.prevStep=prevStep;
+function goStep(i){ if(wizDone[i]||i===wizStep){wizStep=i;updateWizUI();} }
+window.goStep=goStep;
+function resetWizard(){ wizStep=0; wizDone=[false,false,false,false]; updateWizUI(); }
+window.resetWizard=resetWizard;
+
+// ===== INIT =====
+updateWizUI();
+
+</script>
+</body>
+</html>
